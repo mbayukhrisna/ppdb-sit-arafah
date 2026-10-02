@@ -21,6 +21,7 @@ import {
   AdminUnitAccount,
   EducationLevel,
   EducationUnit,
+  ReferralCategory,
   SelectionStatus,
   SPMBRegistrationRecord,
   StaffReferenceRecord,
@@ -78,10 +79,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // Staff Management state
   const [newStaffCode, setNewStaffCode] = useState('');
   const [newStaffName, setNewStaffName] = useState('');
+  const [newStaffCategory, setNewStaffCategory] = useState<ReferralCategory>('Guru dan Staff');
   const [newStaffUnit, setNewStaffUnit] = useState<EducationUnit | 'YAYASAN'>('SMP');
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [editingStaffCode, setEditingStaffCode] = useState('');
   const [editingStaffName, setEditingStaffName] = useState('');
+  const [editingStaffCategory, setEditingStaffCategory] =
+    useState<ReferralCategory>('Guru dan Staff');
+  const [referralCategoryFilter, setReferralCategoryFilter] = useState<'ALL' | ReferralCategory>(
+    'ALL'
+  );
   const [copiedStaffId, setCopiedStaffId] = useState<string | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -175,6 +182,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       ownerId: 'admin-portal',
       refCode: finalCode,
       name: newStaffName.trim(),
+      category: newStaffCategory,
       roleUnit: newStaffUnit,
       active: true,
       createdAtIso: now,
@@ -203,6 +211,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         ...staff,
         refCode: editingStaffCode.trim(),
         name: editingStaffName.trim(),
+        category: editingStaffCategory,
         updatedAtIso: new Date().toISOString(),
       },
       true
@@ -473,7 +482,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             }`}
           >
             <UserPlus className="w-3.5 h-3.5" />
-            Kelola Daftar Guru / Staff Referensi ({staffList.length})
+            Kelola Link ?ref= Guru/Staff &amp; Orang Tua Siswa ({staffList.length})
           </button>
         </div>
       </div>
@@ -576,9 +585,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="font-medium text-slate-800">{row.referenceSource}</div>
-                        <div className="text-slate-500 truncate max-w-[160px]">
+                        <div className="text-slate-500 truncate max-w-[180px]">
                           {row.referenceDetailPrimary}
                         </div>
+                        {row.referenceDetailSecondary &&
+                          row.referenceDetailSecondary !== row.referenceDetailPrimary && (
+                            <div className="text-[#0F5338] text-[11px] font-medium truncate max-w-[180px] mt-0.5">
+                              Ortu Siswa: {row.referenceDetailSecondary}
+                            </div>
+                          )}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         {row.status === 'DITERIMA' && (
@@ -645,17 +660,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           )}
         </div>
       ) : (
-        /* TAB 2: KELOLA DAFTAR GURU & STAFF UNTUK FIELD DINAMIS FORMULIR & LINK REFERRAL */
+        /* TAB 2: KELOLA DAFTAR GURU/STAFF & ORANG TUA SISWA UNTUK LINK REFERRAL ?ref= */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 bg-white border border-[#E2E8E5] rounded-xl p-6">
             <h3 className="text-base font-bold text-[#0F1E19]">
-              Tambah Link Referral Guru / Staff
+              Tambah Link Referral (<code className="font-mono-tabular">?ref=</code>)
             </h3>
             <p className="text-xs text-slate-600 mt-1 mb-5">
-              Setiap Guru/Staff memiliki kode unik (misal <code className="font-mono-tabular">001</code>,{' '}
-              <code className="font-mono-tabular">002</code>) sehingga link{' '}
-              <code className="font-mono-tabular">?ref=001</code> otomatis memilih nama Guru/Staff
-              tersebut pada formulir pendaftaran.
+              Buat kode <code className="font-mono-tabular">?ref=</code> untuk Sumber Referensi{' '}
+              <strong>Guru dan Staff</strong> maupun <strong>Orang Tua Siswa</strong>. Saat link
+              dibuka, bagian 06 otomatis terkunci sesuai kategori &amp; nama pemberi referensi.
             </p>
 
             <form onSubmit={handleAddStaff} className="space-y-4">
@@ -674,14 +688,32 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Nama Guru / Staff &amp; Jenjang
+                  Kategori Sumber Referensi
+                </label>
+                <select
+                  value={newStaffCategory}
+                  onChange={(e) => setNewStaffCategory(e.target.value as ReferralCategory)}
+                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
+                >
+                  <option value="Guru dan Staff">Guru dan Staff</option>
+                  <option value="Orang Tua Siswa">Orang Tua Siswa</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Nama {newStaffCategory === 'Orang Tua Siswa' ? 'Orang Tua Siswa' : 'Guru / Staff'} &amp; Jenjang
                 </label>
                 <input
                   type="text"
                   required
                   value={newStaffName}
                   onChange={(e) => setNewStaffName(e.target.value)}
-                  placeholder="Contoh: Mr Bayu - SMP"
+                  placeholder={
+                    newStaffCategory === 'Orang Tua Siswa'
+                      ? 'Contoh: Bunda Aisyah - SD'
+                      : 'Contoh: Mr Bayu - SMP'
+                  }
                   className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
                 />
               </div>
@@ -714,22 +746,67 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
 
           <div className="lg:col-span-8 bg-white border border-[#E2E8E5] rounded-xl p-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <h3 className="text-base font-bold text-[#0F1E19]">
-                Daftar Link Referral Guru / Staff ({staffList.length})
-              </h3>
-              <span className="text-xs text-slate-500">
-                Format Link: <code className="font-mono-tabular">https://ppdb-sit-arafah.vercel.app/?ref=KODE</code>
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-[#E2E8E5]">
+              <div>
+                <h3 className="text-base font-bold text-[#0F1E19]">
+                  Daftar Link Referral Guru/Staff &amp; Orang Tua Siswa ({staffList.length})
+                </h3>
+                <span className="text-xs text-slate-500 block mt-0.5">
+                  Format Link:{' '}
+                  <code className="font-mono-tabular">
+                    https://ppdb-sit-arafah.vercel.app/?ref=KODE
+                  </code>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs">
+                {(
+                  [
+                    { id: 'ALL', label: `Semua (${staffList.length})` },
+                    {
+                      id: 'Guru dan Staff',
+                      label: `Guru & Staff (${
+                        staffList.filter((s) => (s.category || 'Guru dan Staff') === 'Guru dan Staff')
+                          .length
+                      })`,
+                    },
+                    {
+                      id: 'Orang Tua Siswa',
+                      label: `Orang Tua Siswa (${
+                        staffList.filter((s) => s.category === 'Orang Tua Siswa').length
+                      })`,
+                    },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setReferralCategoryFilter(tab.id)}
+                    className={`px-2.5 py-1.5 font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                      referralCategoryFilter === tab.id
+                        ? 'bg-white text-[#0F1E19] shadow-xs font-semibold'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="divide-y divide-[#E2E8E5] text-xs">
-              {staffList.map((st) => {
-                const referralCount = registrations.filter(
-                  (r) =>
-                    r.referenceSource === 'Guru dan Staff' &&
-                    r.referenceDetailPrimary.toLowerCase() === st.name.toLowerCase()
-                ).length;
+              {staffList
+                .filter((st) =>
+                  referralCategoryFilter === 'ALL'
+                    ? true
+                    : (st.category || 'Guru dan Staff') === referralCategoryFilter
+                )
+                .map((st) => {
+                  const referralCount = registrations.filter(
+                    (r) =>
+                      r.referenceDetailPrimary.toLowerCase() === st.name.toLowerCase() ||
+                      r.referenceDetailSecondary.toLowerCase() === `?ref=${st.refCode.toLowerCase()}`
+                  ).length;
 
                 return (
                   <div
@@ -743,14 +820,24 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           value={editingStaffCode}
                           onChange={(e) => setEditingStaffCode(e.target.value)}
                           placeholder="Kode (001)"
-                          className="w-24 px-3 py-1.5 text-xs font-mono-tabular border border-slate-300 rounded-md"
+                          className="w-20 px-2.5 py-1.5 text-xs font-mono-tabular border border-slate-300 rounded-md"
                         />
+                        <select
+                          value={editingStaffCategory}
+                          onChange={(e) =>
+                            setEditingStaffCategory(e.target.value as ReferralCategory)
+                          }
+                          className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-md bg-white"
+                        >
+                          <option value="Guru dan Staff">Guru dan Staff</option>
+                          <option value="Orang Tua Siswa">Orang Tua Siswa</option>
+                        </select>
                         <input
                           type="text"
                           value={editingStaffName}
                           onChange={(e) => setEditingStaffName(e.target.value)}
-                          placeholder="Nama Guru - Unit"
-                          className="flex-1 min-w-[180px] px-3 py-1.5 text-xs border border-slate-300 rounded-md"
+                          placeholder="Nama Referensi - Unit"
+                          className="flex-1 min-w-[160px] px-3 py-1.5 text-xs border border-slate-300 rounded-md"
                         />
                         <button
                           type="button"
@@ -788,6 +875,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
                         <div className="flex flex-wrap items-center gap-2 text-slate-500 font-mono-tabular text-[11px]">
                           <span>https://ppdb-sit-arafah.vercel.app/?ref={st.refCode}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-sans font-medium text-slate-700">
+                            Kategori: {st.category || 'Guru dan Staff'}
+                          </span>
                           <span aria-hidden="true">·</span>
                           <span className="font-sans">
                             {st.active ? 'Aktif' : 'Nonaktif'} (Unit {st.roleUnit})
@@ -833,6 +924,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           setEditingStaffId(st.id);
                           setEditingStaffCode(st.refCode);
                           setEditingStaffName(st.name);
+                          setEditingStaffCategory(st.category || 'Guru dan Staff');
                         }}
                         className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 cursor-pointer"
                       >

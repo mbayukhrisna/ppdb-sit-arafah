@@ -116,11 +116,14 @@ export interface SPMBRegistrationRecord {
   updatedAtIso: string;
 }
 
+export type ReferralCategory = 'Guru dan Staff' | 'Orang Tua Siswa';
+
 export interface StaffReferenceRecord {
   id: string;
   ownerId: string;
   refCode: string;
   name: string;
+  category?: ReferralCategory;
   roleUnit: EducationUnit | 'YAYASAN';
   active: boolean;
   createdAtIso: string;

@@ -16,6 +16,7 @@ import {
   ReferenceSource,
   EducationUnit,
   SelectionStatus,
+  ReferralCategory,
 } from '../types/spmb';
 
 const DELIM = ' || ';
@@ -234,7 +235,11 @@ export function unpackStaffFromFirestore(
   const refCode = hasCodePrefix
     ? parts[0].trim()
     : String(fallbackIndex).padStart(3, '0');
-  const displayName = hasCodePrefix ? parts.slice(1).join(' - ').trim() : rawName;
+  const displayName = hasCodePrefix ? parts[1].trim() : rawName;
+  const category: ReferralCategory =
+    parts.length >= 3 && parts[2].trim() === 'Orang Tua Siswa'
+      ? 'Orang Tua Siswa'
+      : 'Guru dan Staff';
 
   const createdTs = data.createdAt as Timestamp | undefined;
   const updatedTs = data.updatedAt as Timestamp | undefined;
@@ -244,6 +249,7 @@ export function unpackStaffFromFirestore(
     ownerId: String(data.ownerId || ''),
     refCode,
     name: displayName,
+    category,
     roleUnit: (data.roleUnit as EducationUnit | 'YAYASAN') || 'YAYASAN',
     active: Boolean(data.active),
     createdAtIso:
@@ -264,9 +270,10 @@ export async function saveStaffReferenceToFirestore(
   const currentUser = auth.currentUser;
   if (!currentUser) return false;
   const path = `referrals_staff/${staff.id}`;
-  const cleanCode = cleanPart(staff.refCode || '001', 15);
-  const cleanName = cleanPart(staff.name, 95);
-  const packedName = `${cleanCode}${DELIM}${cleanName}`.slice(0, 120);
+  const cleanCode = cleanPart(staff.refCode || '001', 12);
+  const cleanName = cleanPart(staff.name, 75);
+  const cleanCat = staff.category === 'Orang Tua Siswa' ? 'Orang Tua Siswa' : 'Guru dan Staff';
+  const packedName = `${cleanCode}${DELIM}${cleanName}${DELIM}${cleanCat}`.slice(0, 120);
   try {
     await setDoc(doc(db, 'referrals_staff', staff.id), {
       ownerId: existingRawCreatedAt ? staff.ownerId || currentUser.uid : currentUser.uid,
@@ -339,6 +346,7 @@ export const INITIAL_STAFF_REFERENCES: StaffReferenceRecord[] = [
     ownerId: 'system-seed',
     refCode: '001',
     name: 'Mr Bayu - SMP',
+    category: 'Guru dan Staff',
     roleUnit: 'SMP',
     active: true,
     createdAtIso: '2026-09-01T08:00:00.000Z',
@@ -349,6 +357,7 @@ export const INITIAL_STAFF_REFERENCES: StaffReferenceRecord[] = [
     ownerId: 'system-seed',
     refCode: '002',
     name: 'MS Diah - SMP',
+    category: 'Guru dan Staff',
     roleUnit: 'SMP',
     active: true,
     createdAtIso: '2026-09-01T08:00:00.000Z',
@@ -359,6 +368,7 @@ export const INITIAL_STAFF_REFERENCES: StaffReferenceRecord[] = [
     ownerId: 'system-seed',
     refCode: '003',
     name: 'Ustadz H. Fauzan Hakim - SD',
+    category: 'Guru dan Staff',
     roleUnit: 'SD',
     active: true,
     createdAtIso: '2026-09-01T08:00:00.000Z',
@@ -369,6 +379,7 @@ export const INITIAL_STAFF_REFERENCES: StaffReferenceRecord[] = [
     ownerId: 'system-seed',
     refCode: '004',
     name: 'Ustadzah Siti Aminah - TK',
+    category: 'Guru dan Staff',
     roleUnit: 'TK',
     active: true,
     createdAtIso: '2026-09-01T08:00:00.000Z',
@@ -379,7 +390,52 @@ export const INITIAL_STAFF_REFERENCES: StaffReferenceRecord[] = [
     ownerId: 'system-seed',
     refCode: '005',
     name: 'Ustadzah Hj. Nabila Rahmah - AIS',
+    category: 'Guru dan Staff',
     roleUnit: 'AIS',
+    active: true,
+    createdAtIso: '2026-09-01T08:00:00.000Z',
+    updatedAtIso: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'staff-ref-006',
+    ownerId: 'system-seed',
+    refCode: '006',
+    name: 'Bunda Aisyah Humaira - AIS',
+    category: 'Orang Tua Siswa',
+    roleUnit: 'AIS',
+    active: true,
+    createdAtIso: '2026-09-01T08:00:00.000Z',
+    updatedAtIso: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'staff-ref-007',
+    ownerId: 'system-seed',
+    refCode: '007',
+    name: 'Ayah Zaidan Pratama - SD',
+    category: 'Orang Tua Siswa',
+    roleUnit: 'SD',
+    active: true,
+    createdAtIso: '2026-09-01T08:00:00.000Z',
+    updatedAtIso: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'staff-ref-008',
+    ownerId: 'system-seed',
+    refCode: '008',
+    name: 'Bunda Raline Kusuma - TK',
+    category: 'Orang Tua Siswa',
+    roleUnit: 'TK',
+    active: true,
+    createdAtIso: '2026-09-01T08:00:00.000Z',
+    updatedAtIso: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'staff-ref-009',
+    ownerId: 'system-seed',
+    refCode: '009',
+    name: 'Ayah Taufik Hidayat - SMP',
+    category: 'Orang Tua Siswa',
+    roleUnit: 'SMP',
     active: true,
     createdAtIso: '2026-09-01T08:00:00.000Z',
     updatedAtIso: '2026-09-01T08:00:00.000Z',

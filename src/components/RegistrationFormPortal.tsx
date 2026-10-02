@@ -164,9 +164,11 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
 
   useEffect(() => {
     if (matchedReferralStaff) {
-      setReferenceSource('Guru dan Staff');
+      const isParentRef = matchedReferralStaff.category === 'Orang Tua Siswa';
+      setReferenceSource(isParentRef ? 'Orang Tua/Wali Murid' : 'Guru dan Staff');
       setReferenceDetailPrimary(matchedReferralStaff.name);
-      setHowDidYouKnow('Guru/Staff');
+      setReferenceDetailSecondary(isParentRef ? 'Orang Tua Siswa' : 'Guru dan Staff');
+      setHowDidYouKnow(isParentRef ? 'Orang Tua/Wali Murid' : 'Guru/Staff');
       if (
         matchedReferralStaff.roleUnit === 'AIS' ||
         matchedReferralStaff.roleUnit === 'TK' ||
@@ -178,6 +180,7 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
     } else {
       setReferenceSource('Guru dan Staff');
       setReferenceDetailPrimary('- (Tanpa Link Referral)');
+      setReferenceDetailSecondary('');
       setHowDidYouKnow('Website');
     }
   }, [matchedReferralStaff]);
@@ -239,12 +242,17 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
     setMotherEducation('S1');
     setMotherOccupation('Psikolog Pendidikan');
     setMotherInstitution('Klinik Tumbuh Kembang Amanah');
-    setReferenceSource('Guru dan Staff');
+    const isParentRef = matchedReferralStaff?.category === 'Orang Tua Siswa';
+    setReferenceSource(isParentRef ? 'Orang Tua/Wali Murid' : 'Guru dan Staff');
     setReferenceDetailPrimary(
       matchedReferralStaff ? matchedReferralStaff.name : '- (Tanpa Link Referral)'
     );
-    setReferenceDetailSecondary('');
-    setHowDidYouKnow(matchedReferralStaff ? 'Guru/Staff' : 'Website');
+    setReferenceDetailSecondary(
+      matchedReferralStaff ? (isParentRef ? 'Orang Tua Siswa' : 'Guru dan Staff') : ''
+    );
+    setHowDidYouKnow(
+      matchedReferralStaff ? (isParentRef ? 'Orang Tua/Wali Murid' : 'Guru/Staff') : 'Website'
+    );
     setAdditionalNotes('');
     setStatement1(true);
     setStatement2(true);
@@ -362,6 +370,15 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       const cleanFather = parentMode === 'MOTHER_ONLY' ? '' : fatherName.trim();
       const cleanMother = parentMode === 'FATHER_ONLY' ? '' : motherName.trim();
 
+      const isParentRef = matchedReferralStaff?.category === 'Orang Tua Siswa';
+      const effectiveReferenceSource: ReferenceSource = isParentRef
+        ? 'Orang Tua/Wali Murid'
+        : 'Guru dan Staff';
+
+      const effectivePrimaryDetail = matchedReferralStaff
+        ? matchedReferralStaff.name
+        : '- (Tanpa Link Referral)';
+
       const newRecord: SPMBRegistrationRecord = {
         id: `reg-${Date.now()}`,
         ownerId: 'local-parent',
@@ -404,10 +421,14 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
         motherEducation: cleanMother ? motherEducation : '',
         motherOccupation: cleanMother ? motherOccupation.trim() : '',
         motherInstitution: cleanMother ? motherInstitution.trim() : '',
-        referenceSource,
-        referenceDetailPrimary: referenceDetailPrimary.trim(),
-        referenceDetailSecondary: referenceDetailSecondary.trim(),
-        howDidYouKnow,
+        referenceSource: effectiveReferenceSource,
+        referenceDetailPrimary: effectivePrimaryDetail,
+        referenceDetailSecondary: matchedReferralStaff ? `?ref=${matchedReferralStaff.refCode}` : '',
+        howDidYouKnow: matchedReferralStaff
+          ? isParentRef
+            ? 'Orang Tua/Wali Murid'
+            : 'Guru/Staff'
+          : 'Website',
         additionalNotes: additionalNotes.trim(),
         agreedToTerms: true,
         createdAtIso: nowIso,
@@ -518,6 +539,10 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
                 <span className="text-xs text-slate-500 block">Referensi Pendaftaran</span>
                 <span className="font-medium text-slate-900">
                   {submittedRecord.referenceSource} — {submittedRecord.referenceDetailPrimary}
+                  {submittedRecord.referenceDetailSecondary &&
+                  submittedRecord.referenceDetailSecondary !== submittedRecord.referenceDetailPrimary
+                    ? ` · Orang Tua Siswa: ${submittedRecord.referenceDetailSecondary}`
+                    : ''}
                 </span>
               </div>
             </div>
@@ -702,15 +727,25 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
               </h3>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <dt className="text-xs text-slate-500">Sumber Referensi</dt>
-                  <dd className="font-medium text-slate-900 mt-0.5">Guru dan Staff</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500">Nama Guru / Staff</dt>
+                  <dt className="text-xs text-slate-500">Sumber Referensi (Otomatis ?ref=)</dt>
                   <dd className="font-medium text-slate-900 mt-0.5">
                     {matchedReferralStaff
-                      ? `[${matchedReferralStaff.refCode}] ${matchedReferralStaff.name}`
-                      : referenceDetailPrimary}
+                      ? matchedReferralStaff.category === 'Orang Tua Siswa'
+                        ? 'Orang Tua Siswa'
+                        : 'Guru dan Staff'
+                      : 'Guru dan Staff / Orang Tua Siswa (Tanpa Link ?ref=)'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500">
+                    {matchedReferralStaff?.category === 'Orang Tua Siswa'
+                      ? 'Nama Orang Tua Siswa (Otomatis ?ref=)'
+                      : 'Nama Guru / Staff / Orang Tua Siswa (Otomatis ?ref=)'}
+                  </dt>
+                  <dd className="font-medium text-slate-900 mt-0.5">
+                    {matchedReferralStaff
+                      ? `[?ref=${matchedReferralStaff.refCode}] ${matchedReferralStaff.name}`
+                      : '- (Tanpa Link Referral)'}
                   </dd>
                 </div>
               </dl>
@@ -787,13 +822,19 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
             <div className="flex items-center gap-2 text-[#0F5338]">
               <Link2 className="w-4 h-4 shrink-0" />
               <span>
-                Tautan Referral Aktif (
+                Tautan Referral{' '}
+                <strong>
+                  {matchedReferralStaff.category === 'Orang Tua Siswa'
+                    ? 'Orang Tua Siswa'
+                    : 'Guru dan Staff'}
+                </strong>{' '}
+                Aktif (
                 <strong className="font-mono-tabular">?ref={matchedReferralStaff.refCode}</strong>):
                 Direferensikan oleh <strong>{matchedReferralStaff.name}</strong>
               </span>
             </div>
             <span className="text-slate-600">
-              Data Referensi Guru/Staff telah terisi otomatis
+              Sumber Referensi ({matchedReferralStaff.category || 'Guru dan Staff'}) terisi otomatis
             </span>
           </div>
         )}
@@ -1498,36 +1539,61 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 6: DATA REFERENSI & INFORMASI TAMBAHAN (READ-ONLY OTOMATIS DARI ?ref=) */}
+        {/* BAGIAN 6: DATA REFERENSI & INFORMASI TAMBAHAN (OTOMATIS DARI LINK ?ref= GURU/STAFF ATAU ORANG TUA SISWA) */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-6">
             <h2 className="text-lg font-bold text-[#0F1E19]">
               06. Data Referensi &amp; Informasi Tambahan
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Data referensi terisi secara otomatis berdasarkan tautan referral (
-              <code className="font-mono-tabular">?ref=</code>) dan bersifat tetap (hanya dapat
-              dilihat).
+              Bagian ini otomatis menampilkan <strong>Sumber Referensi</strong> (
+              <strong>Guru dan Staff</strong> atau <strong>Orang Tua Siswa</strong>) beserta nama
+              pemberi referensi sesuai kode <code className="font-mono-tabular">?ref=</code> pada
+              link pendaftaran (hanya dapat dilihat, tidak dapat diubah).
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Sumber Referensi
+                Sumber Referensi (Otomatis <code className="font-mono-tabular">?ref=</code>)
               </label>
               <input
                 type="text"
                 readOnly
                 disabled
-                value="Guru dan Staff"
-                className="w-full px-3.5 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed select-none"
+                value={
+                  matchedReferralStaff
+                    ? matchedReferralStaff.category === 'Orang Tua Siswa'
+                      ? 'Orang Tua Siswa'
+                      : 'Guru dan Staff'
+                    : 'Guru dan Staff / Orang Tua Siswa'
+                }
+                className="w-full px-3.5 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed select-none"
               />
+              <span className="text-[11px] text-slate-500 mt-1 block">
+                Otomatis terisi <strong>Guru dan Staff</strong> atau{' '}
+                <strong>Orang Tua Siswa</strong> tergantung kode{' '}
+                <code className="font-mono-tabular">?ref=</code> (Terkunci).
+              </span>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Nama Guru / Staff
+                {matchedReferralStaff?.category === 'Orang Tua Siswa' ? (
+                  <>
+                    Nama Orang Tua Siswa (Otomatis <code className="font-mono-tabular">?ref=</code>)
+                  </>
+                ) : matchedReferralStaff ? (
+                  <>
+                    Nama Guru / Staff (Otomatis <code className="font-mono-tabular">?ref=</code>)
+                  </>
+                ) : (
+                  <>
+                    Nama Guru / Staff / Orang Tua Siswa (Otomatis{' '}
+                    <code className="font-mono-tabular">?ref=</code>)
+                  </>
+                )}
               </label>
               <input
                 type="text"
@@ -1536,14 +1602,13 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
                 value={
                   matchedReferralStaff
                     ? `[${matchedReferralStaff.refCode}] ${matchedReferralStaff.name}`
-                    : '- (Tanpa Link Referral Guru/Staff)'
+                    : '- (Tanpa Link Referral ?ref=)'
                 }
                 className="w-full px-3.5 py-2.5 text-sm font-semibold text-[#0F5338] bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg cursor-not-allowed select-none"
               />
               <span className="text-[11px] text-slate-500 mt-1 block">
-                {matchedReferralStaff
-                  ? `Otomatis terdeteksi dari link ?ref=${matchedReferralStaff.refCode} (Tidak dapat diubah).`
-                  : 'Otomatis terisi apabila membuka website menggunakan link ?ref=KODE dari Guru/Staff.'}
+                Otomatis menampilkan nama Guru/Staff atau Orang Tua Siswa sesuai link{' '}
+                <code className="font-mono-tabular">?ref=</code> (Tidak dapat diubah).
               </span>
             </div>
           </div>

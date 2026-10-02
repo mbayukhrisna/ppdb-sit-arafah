@@ -44,7 +44,7 @@ type StudentPortalTab = 'FORM' | 'STATUS';
 type AdminRouteTab = 'ADMIN' | 'PLANNING';
 
 const LOCAL_REG_KEY = 'spmb_sit_arafah_registrations_v1';
-const LOCAL_STAFF_KEY = 'spmb_sit_arafah_staff_v2';
+const LOCAL_STAFF_KEY = 'spmb_sit_arafah_staff_v5';
 
 function extractRefCodeFromUrl(): string {
   if (typeof window === 'undefined') return '';
@@ -250,6 +250,22 @@ export default function App() {
           loaded.push(unpackStaffFromFirestore(docSnap.id, data, idx));
           idx += 1;
         });
+        // Ensure default Orang Tua Siswa referral links (006, 007) exist if database was seeded before they were added
+        const hasParentSeed = loaded.some((item) => item.category === 'Orang Tua Siswa');
+        if (!hasParentSeed) {
+          const parentSeeds = INITIAL_STAFF_REFERENCES.filter(
+            (s) => s.category === 'Orang Tua Siswa'
+          );
+          parentSeeds.forEach((seedParent) => {
+            if (!loaded.some((existing) => existing.refCode === seedParent.refCode)) {
+              loaded.push(seedParent);
+              saveStaffReferenceToFirestore({
+                ...seedParent,
+                ownerId: currentUser.uid,
+              }).catch(() => {});
+            }
+          });
+        }
         loaded.sort((a, b) => a.refCode.localeCompare(b.refCode));
         setRawStaffCreatedAtMap(rawMap);
         setStaffList(loaded);

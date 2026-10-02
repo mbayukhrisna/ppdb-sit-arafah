@@ -1075,10 +1075,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   <strong className="font-mono-tabular">{viewingApplicant.whatsapp}</strong>
                 </p>
                 <p>
-                  <span className="text-slate-500">Email Akun:</span>{' '}
-                  <strong>{viewingApplicant.accountEmail}</strong>
-                </p>
-                <p>
                   <span className="text-slate-500">Alamat Lengkap:</span>{' '}
                   <strong>
                     {viewingApplicant.addressStreet}, RT {viewingApplicant.rt}/RW{' '}

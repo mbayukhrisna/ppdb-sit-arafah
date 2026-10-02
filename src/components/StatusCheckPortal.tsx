@@ -178,129 +178,58 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6">
       <div className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8 mb-6 no-print">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E8E5] pb-5 mb-6">
-          <div>
-            <p className="text-xs font-medium text-[#0F5338]">
-              PORTAL CEK PENGUMUMAN &amp; STATUS SELEKSI ORANG TUA
-            </p>
-            <h1 className="text-2xl font-bold text-[#0F1E19] mt-1">
-              Cek Status Pendaftaran SPMB SIT ARAFAH
-            </h1>
-            <p className="text-sm text-slate-600 mt-1">
-              Masukkan Nomor Pendaftaran (<span className="font-mono-tabular">SPMB-XXXXXXXX</span>)
-              atau masuk menggunakan Email &amp; PIN Akun Pendaftaran Anda.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg self-start">
-            <button
-              type="button"
-              onClick={() => {
-                setLookupMode('REG_NUMBER');
-                setSearchError(null);
-              }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                lookupMode === 'REG_NUMBER'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Nomor Pendaftaran
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setLookupMode('ACCOUNT_LOGIN');
-                setSearchError(null);
-              }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                lookupMode === 'ACCOUNT_LOGIN'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Email &amp; PIN Akun
-            </button>
-          </div>
+        <div className="border-b border-[#E2E8E5] pb-5 mb-6">
+          <p className="text-xs font-medium text-[#0F5338]">
+            PORTAL CEK PENGUMUMAN &amp; STATUS SELEKSI ORANG TUA
+          </p>
+          <h1 className="text-2xl font-bold text-[#0F1E19] mt-1">
+            Cek Status Pendaftaran SPMB SIT ARAFAH
+          </h1>
+          <p className="text-sm text-slate-600 mt-1">
+            Masukkan Nomor Pendaftaran (<span className="font-mono-tabular">SPMB-XXXXXXXX</span>)
+            Anda untuk melihat status verifikasi dan pengumuman seleksi.
+          </p>
         </div>
 
-        {lookupMode === 'REG_NUMBER' ? (
-          <form onSubmit={handleSearchByNumber} className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={regNumberQuery}
-                  onChange={(e) => setRegNumberQuery(e.target.value)}
-                  placeholder="Masukkan Nomor Pendaftaran, misal: SPMB-20260101"
-                  className="w-full px-4 py-2.5 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                />
-              </div>
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#0F5338] rounded-lg hover:bg-[#0B3E29] transition-colors cursor-pointer whitespace-nowrap"
-              >
-                <Search className="w-4 h-4" />
-                Cek Status Kelulusan
-              </button>
+        <form onSubmit={handleSearchByNumber} className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={regNumberQuery}
+                onChange={(e) => setRegNumberQuery(e.target.value)}
+                placeholder="Masukkan Nomor Pendaftaran, misal: SPMB-20260101"
+                className="w-full px-4 py-2.5 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
+              />
             </div>
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#0F5338] rounded-lg hover:bg-[#0B3E29] transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <Search className="w-4 h-4" />
+              Cek Status Kelulusan
+            </button>
+          </div>
 
-            {/* Quick demo buttons for instant testing */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 text-xs text-slate-500">
-              <span>Contoh Nomor Pendaftaran Aktif:</span>
-              {registrations.slice(0, 5).map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setRegNumberQuery(item.registrationNumber);
-                    setFoundRecord(item);
-                    setSearchError(null);
-                  }}
-                  className="px-2.5 py-1 font-mono-tabular text-xs font-medium text-[#0F5338] bg-[#F3F7F5] hover:bg-[#E2EFE9] rounded-md transition-colors cursor-pointer"
-                >
-                  {item.registrationNumber} ({item.unit})
-                </button>
-              ))}
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={handleSearchByAccount} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Email Aktif</label>
-              <input
-                type="email"
-                required
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="farhan.akbar@keluarga.id"
-                className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                PIN / Password
-              </label>
-              <input
-                type="password"
-                required
-                value={loginPin}
-                onChange={(e) => setLoginPin(e.target.value)}
-                placeholder="PIN Pendaftaran"
-                className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-              />
-            </div>
-            <div className="flex items-end">
+          {/* Quick demo buttons for instant testing */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 text-xs text-slate-500">
+            <span>Contoh Nomor Pendaftaran Aktif:</span>
+            {registrations.slice(0, 5).map((item) => (
               <button
-                type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#0F5338] rounded-lg hover:bg-[#0B3E29] transition-colors cursor-pointer whitespace-nowrap"
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setRegNumberQuery(item.registrationNumber);
+                  setFoundRecord(item);
+                  setSearchError(null);
+                }}
+                className="px-2.5 py-1 font-mono-tabular text-xs font-medium text-[#0F5338] bg-[#F3F7F5] hover:bg-[#E2EFE9] rounded-md transition-colors cursor-pointer"
               >
-                <KeyRound className="w-4 h-4" />
-                Masuk Akun Pendaftaran
+                {item.registrationNumber} ({item.unit})
               </button>
-            </div>
-          </form>
-        )}
+            ))}
+          </div>
+        </form>
 
         {searchError && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5 text-sm text-red-800">

@@ -395,18 +395,6 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       return;
     }
 
-    if (!accountEmail.includes('@')) {
-      setErrorMessage('Mohon masukkan Email Aktif yang valid pada bagian Akun Pendaftaran.');
-      return;
-    }
-    if (accountPin.trim().length < 4) {
-      setErrorMessage('PIN / Password minimal terdiri dari 4 karakter.');
-      return;
-    }
-    if (accountPin !== confirmPin) {
-      setErrorMessage('Konfirmasi PIN / Password tidak cocok dengan PIN / Password yang dibuat.');
-      return;
-    }
     if (
       !nisn.trim() ||
       !fullName.trim() ||
@@ -505,8 +493,8 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
         status: 'MENUNGGU_VERIFIKASI',
         statusNotes:
           'Pendaftaran telah diterima sistem SPMB SIT ARAFAH dan sedang dalam antrean verifikasi panitia unit.',
-        accountEmail: accountEmail.trim(),
-        accountPin: accountPin.trim(),
+        accountEmail: accountEmail.trim() || 'pendaftar@spmb-arafah.sch.id',
+        accountPin: accountPin.trim() || '0000',
         nisn: nisn.trim(),
         fullName: fullName.trim(),
         nickname: nickname.trim(),
@@ -601,8 +589,6 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
               <span>Unit Peminatan: {submittedRecord.unit}</span>
               <span aria-hidden="true">·</span>
               <span>Status Awal: Menunggu Verifikasi Panitia</span>
-              <span aria-hidden="true">·</span>
-              <span>Email Akun: {submittedRecord.accountEmail}</span>
             </div>
           </div>
 
@@ -613,9 +599,8 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
             </p>
             <p className="mt-1">
               Informasi selanjutnya akan disampaikan melalui nomor WhatsApp (
-              <span className="font-mono-tabular font-medium">{submittedRecord.whatsapp}</span>) dan
-              email (<span className="font-medium">{submittedRecord.accountEmail}</span>) yang telah
-              didaftarkan. Orang tua dapat mengecek status kelulusan sewaktu-waktu pada menu{' '}
+              <span className="font-mono-tabular font-medium">{submittedRecord.whatsapp}</span>) yang
+              telah didaftarkan. Orang tua dapat mengecek status kelulusan sewaktu-waktu pada menu{' '}
               <strong>Cek Status Seleksi</strong> menggunakan Nomor Pendaftaran di atas.
             </p>
           </div>
@@ -834,10 +819,6 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
                   <dd className="font-mono-tabular font-medium text-slate-900 mt-0.5">
                     {whatsapp}
                   </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500">Email Akun Pendaftaran</dt>
-                  <dd className="font-medium text-slate-900 mt-0.5">{accountEmail}</dd>
                 </div>
                 <div className="sm:col-span-2">
                   <dt className="text-xs text-slate-500">Alamat Lengkap</dt>
@@ -1166,71 +1147,10 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 2: AKUN PENDAFTARAN */}
+        {/* BAGIAN 2: DATA CALON PESERTA DIDIK */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-6">
-            <h2 className="text-lg font-bold text-[#0F1E19]">02. Akun Pendaftaran</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Masukkan email yang aktif dan buat PIN/password untuk masuk ke akun pendaftaran serta
-              menerima informasi seleksi.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div className="sm:col-span-1">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Email Aktif <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="email"
-                required
-                value={accountEmail}
-                onChange={(e) => setAccountEmail(e.target.value)}
-                placeholder="nama@email.com"
-                className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-              />
-              <span className="text-[11px] text-slate-500 mt-1 block">
-                Digunakan untuk menerima informasi pendaftaran.
-              </span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                PIN / Password <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="password"
-                required
-                value={accountPin}
-                onChange={(e) => setAccountPin(e.target.value)}
-                placeholder="Buat PIN / Password"
-                className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-              />
-              <span className="text-[11px] text-slate-500 mt-1 block">
-                Minimal 4 karakter angka/huruf.
-              </span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Konfirmasi PIN / Password <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="password"
-                required
-                value={confirmPin}
-                onChange={(e) => setConfirmPin(e.target.value)}
-                placeholder="Masukkan kembali PIN"
-                className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* BAGIAN 3: DATA CALON PESERTA DIDIK */}
-        <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
-          <div className="border-b border-[#E2E8E5] pb-4 mb-6">
-            <h2 className="text-lg font-bold text-[#0F1E19]">03. Data Calon Peserta Didik</h2>
+            <h2 className="text-lg font-bold text-[#0F1E19]">02. Data Calon Peserta Didik</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Tuliskan identitas lengkap calon peserta didik sesuai Akta Kelahiran atau Kartu
               Keluarga.
@@ -1465,10 +1385,10 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 4: DATA SEKOLAH ASAL */}
+        {/* BAGIAN 3: DATA SEKOLAH ASAL */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-6">
-            <h2 className="text-lg font-bold text-[#0F1E19]">04. Data Sekolah Asal</h2>
+            <h2 className="text-lg font-bold text-[#0F1E19]">03. Data Sekolah Asal</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Informasi sekolah atau lembaga pendidikan sebelumnya (isi &quot;Belum Sekolah / Dari
               Rumah&quot; jika mendaftar AIS/TK dari rumah).
@@ -1548,12 +1468,12 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 5: DATA ORANG TUA (DATA AYAH / DATA IBU — FLEKSIBEL SALAH SATU) */}
+        {/* BAGIAN 4: DATA ORANG TUA (DATA AYAH / DATA IBU — FLEKSIBEL SALAH SATU) */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E8E5] pb-4 mb-6">
             <div>
               <h2 className="text-lg font-bold text-[#0F1E19]">
-                05. Data Orang Tua (Ayah &amp; Ibu)
+                04. Data Orang Tua (Ayah &amp; Ibu)
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
                 Sesuai ketentuan SPMB SIT ARAFAH, orang tua{' '}
@@ -1807,11 +1727,11 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 6: DATA REFERENSI & INFORMASI TAMBAHAN (OTOMATIS DARI LINK ?ref= GURU/STAFF ATAU ORANG TUA SISWA) */}
+        {/* BAGIAN 5: DATA REFERENSI & INFORMASI TAMBAHAN (OTOMATIS DARI LINK ?ref= GURU/STAFF ATAU ORANG TUA SISWA) */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-6">
             <h2 className="text-lg font-bold text-[#0F1E19]">
-              06. Data Referensi &amp; Informasi Tambahan
+              05. Data Referensi &amp; Informasi Tambahan
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Bagian ini otomatis menampilkan <strong>Sumber Referensi</strong> (
@@ -1882,10 +1802,10 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 7: PERNYATAAN PENDAFTAR */}
+        {/* BAGIAN 6: PERNYATAAN PENDAFTAR */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-5">
-            <h2 className="text-lg font-bold text-[#0F1E19]">07. Pernyataan Pendaftar</h2>
+            <h2 className="text-lg font-bold text-[#0F1E19]">06. Pernyataan Pendaftar</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Saya menyatakan dengan sesungguhnya bahwa:
             </p>

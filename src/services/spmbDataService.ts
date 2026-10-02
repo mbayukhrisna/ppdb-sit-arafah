@@ -199,17 +199,18 @@ export async function saveRegistrationToFirestore(
   existingRawCreatedAt?: unknown
 ) {
   const currentUser = auth.currentUser;
-  if (!currentUser) return false;
+  const effectiveOwnerId = currentUser?.uid || (record.ownerId && record.ownerId.trim().length > 0 ? record.ownerId : 'local-parent');
   const path = `registrations/${record.id}`;
   try {
     const payload = packRegistrationForFirestore(
       record,
-      existingRawCreatedAt ? record.ownerId || currentUser.uid : currentUser.uid,
+      existingRawCreatedAt ? record.ownerId || effectiveOwnerId : effectiveOwnerId,
       existingRawCreatedAt
     );
     await setDoc(doc(collection(db, 'registrations'), record.id), payload);
     return true;
   } catch (error) {
+    console.error('Firestore save registration error:', error);
     handleFirestoreError(
       error,
       existingRawCreatedAt ? OperationType.UPDATE : OperationType.CREATE,
@@ -219,8 +220,6 @@ export async function saveRegistrationToFirestore(
 }
 
 export async function removeRegistrationFromFirestore(id: string) {
-  const currentUser = auth.currentUser;
-  if (!currentUser) return false;
   const path = `registrations/${id}`;
   try {
     await deleteDoc(doc(db, 'registrations', id));
@@ -274,15 +273,15 @@ export async function saveStaffReferenceToFirestore(
   existingRawCreatedAt?: unknown
 ) {
   const currentUser = auth.currentUser;
-  if (!currentUser) return false;
   const path = `referrals_staff/${staff.id}`;
   const cleanCode = cleanPart(staff.refCode || '001', 12);
   const cleanName = cleanPart(staff.name, 75);
   const cleanCat = staff.category === 'Orang Tua Siswa' ? 'Orang Tua Siswa' : 'Guru dan Staff';
   const packedName = `${cleanCode}${DELIM}${cleanName}${DELIM}${cleanCat}`.slice(0, 120);
+  const effectiveOwnerId = currentUser?.uid || staff.ownerId || 'admin-system';
   try {
     await setDoc(doc(db, 'referrals_staff', staff.id), {
-      ownerId: existingRawCreatedAt ? staff.ownerId || currentUser.uid : currentUser.uid,
+      ownerId: existingRawCreatedAt ? staff.ownerId || effectiveOwnerId : effectiveOwnerId,
       name: packedName,
       roleUnit: staff.roleUnit,
       active: staff.active,
@@ -300,8 +299,6 @@ export async function saveStaffReferenceToFirestore(
 }
 
 export async function removeStaffReferenceFromFirestore(id: string) {
-  const currentUser = auth.currentUser;
-  if (!currentUser) return false;
   const path = `referrals_staff/${id}`;
   try {
     await deleteDoc(doc(db, 'referrals_staff', id));

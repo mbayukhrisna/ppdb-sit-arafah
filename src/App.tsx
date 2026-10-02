@@ -38,7 +38,7 @@ import { RegistrationFormPortal } from './components/RegistrationFormPortal';
 import { StatusCheckPortal } from './components/StatusCheckPortal';
 import { AdminPortal } from './components/AdminPortal';
 import { PlanningBlueprintView } from './components/PlanningBlueprintView';
-import heroCampusImg from './assets/images/hero_sit_arafah_campus_1790920239839.jpg';
+import logoSitArafah from './assets/images/SITARAFAH.png';
 
 type StudentPortalTab = 'FORM' | 'STATUS';
 type AdminRouteTab = 'ADMIN' | 'PLANNING';
@@ -191,26 +191,12 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Attach Firestore real-time listeners when authenticated
+  // Attach Firestore real-time listeners across all devices on mount
   useEffect(() => {
-    if (!authReady || !currentUser) return;
-
-    const isBootstrappedAdmin =
-      currentUser.email === 'mbayukhrisnamurthi@gmail.com' && currentUser.emailVerified;
-
-    const regQuery = isBootstrappedAdmin
-      ? collection(db, 'registrations')
-      : query(collection(db, 'registrations'), where('ownerId', '==', currentUser.uid));
-
     const unsubReg = onSnapshot(
-      regQuery,
+      collection(db, 'registrations'),
       (snapshot) => {
-        if (snapshot.empty) {
-          INITIAL_REGISTRATIONS.forEach((seedRec) => {
-            saveRegistrationToFirestore({ ...seedRec, ownerId: currentUser.uid }).catch(() => {});
-          });
-          return;
-        }
+        if (snapshot.empty) return;
         const rawMap: Record<string, unknown> = {};
         const loaded: SPMBRegistrationRecord[] = [];
         snapshot.forEach((docSnap) => {
@@ -222,25 +208,14 @@ export default function App() {
         setRegistrations(loaded);
       },
       (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'registrations');
+        console.warn('Firestore registrations listener (offline/cache fallback):', error);
       }
     );
 
-    const staffQuery = isBootstrappedAdmin
-      ? collection(db, 'referrals_staff')
-      : query(collection(db, 'referrals_staff'), where('active', '==', true));
-
     const unsubStaff = onSnapshot(
-      staffQuery,
+      collection(db, 'referrals_staff'),
       (snapshot) => {
-        if (snapshot.empty) {
-          INITIAL_STAFF_REFERENCES.forEach((seedStaff) => {
-            saveStaffReferenceToFirestore({ ...seedStaff, ownerId: currentUser.uid }).catch(
-              () => {}
-            );
-          });
-          return;
-        }
+        if (snapshot.empty) return;
         const rawMap: Record<string, unknown> = {};
         const loaded: StaffReferenceRecord[] = [];
         let idx = 1;
@@ -250,28 +225,12 @@ export default function App() {
           loaded.push(unpackStaffFromFirestore(docSnap.id, data, idx));
           idx += 1;
         });
-        // Ensure default Orang Tua Siswa referral links (006, 007) exist if database was seeded before they were added
-        const hasParentSeed = loaded.some((item) => item.category === 'Orang Tua Siswa');
-        if (!hasParentSeed) {
-          const parentSeeds = INITIAL_STAFF_REFERENCES.filter(
-            (s) => s.category === 'Orang Tua Siswa'
-          );
-          parentSeeds.forEach((seedParent) => {
-            if (!loaded.some((existing) => existing.refCode === seedParent.refCode)) {
-              loaded.push(seedParent);
-              saveStaffReferenceToFirestore({
-                ...seedParent,
-                ownerId: currentUser.uid,
-              }).catch(() => {});
-            }
-          });
-        }
         loaded.sort((a, b) => a.refCode.localeCompare(b.refCode));
         setRawStaffCreatedAtMap(rawMap);
         setStaffList(loaded);
       },
       (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'referrals_staff');
+        console.warn('Firestore referrals listener (offline/cache fallback):', error);
       }
     );
 
@@ -279,16 +238,20 @@ export default function App() {
       unsubReg();
       unsubStaff();
     };
-  }, [authReady, currentUser]);
+  }, []);
 
   // Handlers for Registration CRUD
   const handleAddRegistration = async (newRecord: SPMBRegistrationRecord) => {
-    setRegistrations((prev) => [newRecord, ...prev]);
-    if (currentUser) {
-      await saveRegistrationToFirestore({
-        ...newRecord,
-        ownerId: currentUser.uid,
-      });
+    const recordToSave: SPMBRegistrationRecord = {
+      ...newRecord,
+      ownerId: currentUser ? currentUser.uid : (newRecord.ownerId || 'local-parent'),
+    };
+    setRegistrations((prev) => [recordToSave, ...prev]);
+    // Save directly to cloud Firestore so data from HP/other devices immediately syncs to Admin
+    try {
+      await saveRegistrationToFirestore(recordToSave);
+    } catch (err) {
+      console.warn('Gagal menyimpan pendaftaran ke cloud Firestore:', err);
     }
   };
 
@@ -296,16 +259,20 @@ export default function App() {
     setRegistrations((prev) =>
       prev.map((item) => (item.id === updatedRecord.id ? updatedRecord : item))
     );
-    if (currentUser) {
+    try {
       const rawCreatedAt = rawRegCreatedAtMap[updatedRecord.id];
       await saveRegistrationToFirestore(updatedRecord, rawCreatedAt);
+    } catch (err) {
+      console.warn('Gagal mengupdate pendaftaran di Firestore:', err);
     }
   };
 
   const handleDeleteRegistration = async (id: string) => {
     setRegistrations((prev) => prev.filter((item) => item.id !== id));
-    if (currentUser) {
+    try {
       await removeRegistrationFromFirestore(id);
+    } catch (err) {
+      console.warn('Gagal menghapus pendaftaran di Firestore:', err);
     }
   };
 
@@ -316,16 +283,20 @@ export default function App() {
     } else {
       setStaffList((prev) => [...prev, staff]);
     }
-    if (currentUser) {
+    try {
       const rawCreatedAt = isEdit ? rawStaffCreatedAtMap[staff.id] : undefined;
       await saveStaffReferenceToFirestore(staff, rawCreatedAt);
+    } catch (err) {
+      console.warn('Gagal menyimpan referensi guru/staff di Firestore:', err);
     }
   };
 
   const handleDeleteStaff = async (id: string) => {
     setStaffList((prev) => prev.filter((s) => s.id !== id));
-    if (currentUser) {
+    try {
       await removeStaffReferenceFromFirestore(id);
+    } catch (err) {
+      console.warn('Gagal menghapus referensi guru/staff di Firestore:', err);
     }
   };
 
@@ -444,6 +415,9 @@ export default function App() {
             <AdminPortal
               registrations={registrations}
               staffList={staffList}
+              isCloudConnected={Boolean(currentUser)}
+              cloudUserEmail={currentUser?.email}
+              onConnectCloud={() => signInWithGoogleAccount().catch(() => {})}
               onUpdateRegistration={handleUpdateRegistration}
               onDeleteRegistration={handleDeleteRegistration}
               onSaveStaff={handleSaveStaff}
@@ -654,20 +628,20 @@ export default function App() {
           </div>
 
           <div className="lg:col-span-5">
-            <div className="relative rounded-xl overflow-hidden border border-white/15 aspect-video bg-gradient-to-br from-[#133A2B] to-[#091C14]">
+            <div className="relative rounded-xl overflow-hidden border border-white/15 aspect-video bg-white flex items-center justify-center p-4 shadow-md">
               {!heroImgFailed ? (
                 <img
-                  src={heroCampusImg}
-                  alt="Kampus Terpadu Sekolah Islam Terpadu (SIT) Arafah"
+                  src={logoSitArafah}
+                  alt="Logo Resmi Sekolah Islam Terpadu (SIT) Arafah"
                   referrerPolicy="no-referrer"
                   onError={() => setHeroImgFailed(true)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center p-6 text-center">
+                <div className="w-full h-full flex items-center justify-center p-6 text-center bg-gradient-to-br from-[#133A2B] to-[#091C14]">
                   <div>
                     <p className="font-display text-lg font-bold text-white">
-                      Kampus Terpadu SIT ARAFAH
+                      SIT ARAFAH
                     </p>
                     <p className="text-xs text-emerald-200 mt-1">
                       Pendidikan Islam Terpadu Jenjang AIS · TK · SD · SMP
@@ -675,10 +649,10 @@ export default function App() {
                   </div>
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent flex items-end p-4">
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-4">
                 <div className="text-xs text-white/95">
-                  <p className="font-semibold">Kampus Pendidikan SIT ARAFAH</p>
-                  <p className="text-white/75">
+                  <p className="font-semibold">Sekolah Islam Terpadu (SIT) ARAFAH</p>
+                  <p className="text-white/80">
                     Pendaftaran Terbuka untuk Jenjang AIS, TK IT, SD IT, dan SMP IT
                   </p>
                 </div>

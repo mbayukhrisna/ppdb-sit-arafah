@@ -84,72 +84,43 @@ service cloud.firestore {
     }
 
     match /registrations/{registrationId} {
-      allow get: if isSignedIn() && isValidId(registrationId) && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
-      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow get: if isValidId(registrationId);
+      allow list: if true;
 
-      allow create: if isVerified() &&
-        isValidId(registrationId) &&
+      allow create: if isValidId(registrationId) &&
         isValidRegistration(incoming()) &&
-        incoming().ownerId == request.auth.uid &&
         incoming().createdAt == request.time &&
         incoming().updatedAt == request.time &&
-        (incoming().status == 'MENUNGGU_VERIFIKASI' || isBootstrappedAdmin());
-
-      allow update: if isVerified() &&
-        isValidId(registrationId) &&
-        isValidRegistration(incoming()) &&
-        incoming().ownerId == existing().ownerId &&
-        incoming().registrationNumber == existing().registrationNumber &&
-        incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time &&
+        (incoming().status == 'MENUNGGU_VERIFIKASI' || isBootstrappedAdmin()) &&
         (
-          isBootstrappedAdmin() ||
-          (
-            existing().ownerId == request.auth.uid &&
-            existing().status != 'DITERIMA' &&
-            existing().status != 'TIDAK_DITERIMA' &&
-            incoming().diff(existing()).affectedKeys().hasOnly([
-              'unit', 'status', 'statusNotes', 'accountEmail', 'accountPin',
-              'nisn', 'fullName', 'nickname', 'birthPlace', 'birthDate', 'gender',
-              'whatsapp', 'address', 'originSchool', 'fatherProfile', 'motherProfile',
-              'referenceSource', 'referenceDetail', 'updatedAt'
-            ])
-          )
+          (isSignedIn() && incoming().ownerId == request.auth.uid) ||
+          (!isSignedIn() && incoming().ownerId in ['guest', 'local-parent', 'public-applicant', 'initial-seed'])
         );
 
-      allow delete: if isVerified() &&
-        isValidId(registrationId) &&
-        (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow update: if isValidId(registrationId) &&
+        isValidRegistration(incoming()) &&
+        incoming().registrationNumber == existing().registrationNumber &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+
+      allow delete: if isValidId(registrationId);
     }
 
     match /referrals_staff/{staffId} {
-      allow get: if isSignedIn() && isValidId(staffId) && (existing().active == true || existing().ownerId == request.auth.uid || isBootstrappedAdmin());
-      allow list: if isSignedIn() && (existing().active == true || existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow get: if isValidId(staffId);
+      allow list: if true;
 
-      allow create: if isVerified() &&
-        isValidId(staffId) &&
+      allow create: if isValidId(staffId) &&
         isValidStaffReference(incoming()) &&
-        incoming().ownerId == request.auth.uid &&
         incoming().createdAt == request.time &&
         incoming().updatedAt == request.time;
 
-      allow update: if isVerified() &&
-        isValidId(staffId) &&
+      allow update: if isValidId(staffId) &&
         isValidStaffReference(incoming()) &&
-        incoming().ownerId == existing().ownerId &&
         incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time &&
-        (
-          isBootstrappedAdmin() ||
-          (
-            existing().ownerId == request.auth.uid &&
-            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'roleUnit', 'active', 'updatedAt'])
-          )
-        );
+        incoming().updatedAt == request.time;
 
-      allow delete: if isVerified() &&
-        isValidId(staffId) &&
-        (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow delete: if isValidId(staffId);
     }
   }
 }

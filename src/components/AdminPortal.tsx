@@ -16,6 +16,7 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Cloud,
 } from 'lucide-react';
 import {
   AdminUnitAccount,
@@ -31,6 +32,9 @@ import { ADMIN_UNIT_ACCOUNTS } from '../services/spmbDataService';
 interface AdminPortalProps {
   registrations: SPMBRegistrationRecord[];
   staffList: StaffReferenceRecord[];
+  isCloudConnected?: boolean;
+  cloudUserEmail?: string | null;
+  onConnectCloud?: () => void;
   onUpdateRegistration: (updated: SPMBRegistrationRecord) => Promise<void>;
   onDeleteRegistration: (id: string) => Promise<void>;
   onSaveStaff: (staff: StaffReferenceRecord, isEdit: boolean) => Promise<void>;
@@ -54,6 +58,9 @@ const EDUCATION_LEVELS: EducationLevel[] = [
 export const AdminPortal: React.FC<AdminPortalProps> = ({
   registrations,
   staffList,
+  isCloudConnected = false,
+  cloudUserEmail,
+  onConnectCloud,
   onUpdateRegistration,
   onDeleteRegistration,
   onSaveStaff,
@@ -458,7 +465,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       </div>
 
       {/* Sub-Navigation Tabs inside Admin */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg">
           <button
             type="button"
@@ -484,6 +491,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <UserPlus className="w-3.5 h-3.5" />
             Kelola Link ?ref= Guru/Staff &amp; Orang Tua Siswa ({staffList.length})
           </button>
+        </div>
+
+        {/* Real-time Cloud Indicator */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 shadow-xs">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="font-semibold">Cloud Real-Time Terhubung</span>
+          <span className="text-emerald-700/80 hidden sm:inline">· Sinkronisasi HP &amp; PC Aktif</span>
+        </div>
+      </div>
+
+      <div className="mb-4 px-4 py-2.5 bg-emerald-50/80 border border-emerald-200/90 rounded-xl flex items-center justify-between gap-3 text-xs text-emerald-900">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>
+            <strong>Sinkronisasi Multi-Perangkat Aktif:</strong> Setiap pendaftaran yang dikirim orang tua dari HP mana pun (melalui link resmi maupun tautan <code className="font-mono-tabular bg-emerald-100 px-1 py-0.5 rounded">?ref=</code>) akan langsung muncul otomatis di tabel ini secara real-time.
+          </span>
         </div>
       </div>
 

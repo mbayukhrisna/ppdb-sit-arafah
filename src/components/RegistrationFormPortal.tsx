@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CheckCircle2,
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   Sparkles,
   FileCheck2,
   UserCheck,
+  Link2,
 } from 'lucide-react';
 import {
   EducationLevel,
@@ -21,6 +22,7 @@ import {
 
 interface RegistrationFormPortalProps {
   activeStaffList: StaffReferenceRecord[];
+  referralCodeFromUrl?: string;
   onSubmitRegistration: (newRecord: SPMBRegistrationRecord) => Promise<void>;
   onNavigateToStatusCheck: (regNumber: string) => void;
 }
@@ -75,6 +77,7 @@ type ParentFillMode = 'BOTH' | 'FATHER_ONLY' | 'MOTHER_ONLY';
 
 export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   activeStaffList,
+  referralCodeFromUrl = '',
   onSubmitRegistration,
   onNavigateToStatusCheck,
 }) => {
@@ -152,6 +155,33 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   // Generated record after submission
   const [submittedRecord, setSubmittedRecord] = useState<SPMBRegistrationRecord | null>(null);
 
+  // Resolve matched staff from URL query ?ref=001
+  const matchedReferralStaff = referralCodeFromUrl
+    ? activeStaffList.find(
+        (s) => s.active && s.refCode.toLowerCase() === referralCodeFromUrl.trim().toLowerCase()
+      ) || null
+    : null;
+
+  useEffect(() => {
+    if (matchedReferralStaff) {
+      setReferenceSource('Guru dan Staff');
+      setReferenceDetailPrimary(matchedReferralStaff.name);
+      setHowDidYouKnow('Guru/Staff');
+      if (
+        matchedReferralStaff.roleUnit === 'AIS' ||
+        matchedReferralStaff.roleUnit === 'TK' ||
+        matchedReferralStaff.roleUnit === 'SD' ||
+        matchedReferralStaff.roleUnit === 'SMP'
+      ) {
+        setUnit(matchedReferralStaff.roleUnit);
+      }
+    } else {
+      setReferenceSource('Guru dan Staff');
+      setReferenceDetailPrimary('- (Tanpa Link Referral)');
+      setHowDidYouKnow('Website');
+    }
+  }, [matchedReferralStaff]);
+
   const handleReferenceSourceChange = (newSource: ReferenceSource) => {
     setReferenceSource(newSource);
     setReferenceDetailSecondary('');
@@ -188,7 +218,15 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
     setOriginSchoolCity('Kota Depok');
     setOriginSchoolProvince('Jawa Barat');
     setGraduationYear('2026');
-    setUnit('SD');
+    setUnit(
+      matchedReferralStaff &&
+        (matchedReferralStaff.roleUnit === 'AIS' ||
+          matchedReferralStaff.roleUnit === 'TK' ||
+          matchedReferralStaff.roleUnit === 'SD' ||
+          matchedReferralStaff.roleUnit === 'SMP')
+        ? matchedReferralStaff.roleUnit
+        : 'SD'
+    );
     setParentMode('MOTHER_ONLY');
     setFatherName('');
     setFatherNik('');
@@ -203,11 +241,11 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
     setMotherInstitution('Klinik Tumbuh Kembang Amanah');
     setReferenceSource('Guru dan Staff');
     setReferenceDetailPrimary(
-      activeStaffList[0]?.name || 'Ustadz H. Fauzan Hakim, M.Pd. (Guru SD IT)'
+      matchedReferralStaff ? matchedReferralStaff.name : '- (Tanpa Link Referral)'
     );
     setReferenceDetailSecondary('');
-    setHowDidYouKnow('Guru/Staff');
-    setAdditionalNotes('Mohon informasi jadwal observasi gelombang pertama.');
+    setHowDidYouKnow(matchedReferralStaff ? 'Guru/Staff' : 'Website');
+    setAdditionalNotes('');
     setStatement1(true);
     setStatement2(true);
     setStatement3(true);
@@ -299,19 +337,6 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       setErrorMessage(
         'Data Orang Tua wajib diisi minimal SALAH SATU secara lengkap (Data Ayah saja, Data Ibu saja, atau keduanya).'
       );
-      return;
-    }
-
-    if (!referenceDetailPrimary.trim()) {
-      setErrorMessage('Mohon lengkapi detail Sumber Referensi yang dipilih.');
-      return;
-    }
-    if (referenceSource === 'Alumni' && !referenceDetailSecondary.trim()) {
-      setErrorMessage('Mohon tuliskan Tahun Lulus untuk referensi Alumni.');
-      return;
-    }
-    if (referenceSource === 'Teman/Kerabat' && !referenceDetailSecondary.trim()) {
-      setErrorMessage('Mohon tuliskan Hubungan untuk referensi Teman/Kerabat.');
       return;
     }
 
@@ -673,29 +698,20 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
             {/* 5. Referensi */}
             <section className="pt-6">
               <h3 className="text-sm font-semibold text-[#0F5338] mb-3">
-                05. Referensi & Informasi Tambahan
+                05. Data Referensi &amp; Informasi Tambahan
               </h3>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
                   <dt className="text-xs text-slate-500">Sumber Referensi</dt>
-                  <dd className="font-medium text-slate-900 mt-0.5">{referenceSource}</dd>
+                  <dd className="font-medium text-slate-900 mt-0.5">Guru dan Staff</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">
-                    Nama Guru/Staff atau Pemberi Referensi
-                  </dt>
+                  <dt className="text-xs text-slate-500">Nama Guru / Staff</dt>
                   <dd className="font-medium text-slate-900 mt-0.5">
-                    {referenceDetailPrimary}
-                    {referenceDetailSecondary ? ` (${referenceDetailSecondary})` : ''}
+                    {matchedReferralStaff
+                      ? `[${matchedReferralStaff.refCode}] ${matchedReferralStaff.name}`
+                      : referenceDetailPrimary}
                   </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500">Mengetahui SIT ARAFAH Melalui</dt>
-                  <dd className="font-medium text-slate-900 mt-0.5">{howDidYouKnow}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500">Catatan Tambahan</dt>
-                  <dd className="font-medium text-slate-900 mt-0.5">{additionalNotes || '—'}</dd>
                 </div>
               </dl>
             </section>
@@ -765,6 +781,22 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           <span aria-hidden="true">/</span>
           <span>Terhubung Langsung ke Portal 4 Admin Jenjang</span>
         </div>
+
+        {matchedReferralStaff && (
+          <div className="mt-4 p-3.5 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-[#0F5338]">
+              <Link2 className="w-4 h-4 shrink-0" />
+              <span>
+                Tautan Referral Aktif (
+                <strong className="font-mono-tabular">?ref={matchedReferralStaff.refCode}</strong>):
+                Direferensikan oleh <strong>{matchedReferralStaff.name}</strong>
+              </span>
+            </div>
+            <span className="text-slate-600">
+              Data Referensi Guru/Staff telah terisi otomatis
+            </span>
+          </div>
+        )}
       </div>
 
       {errorMessage && (
@@ -1466,228 +1498,53 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 6: DATA REFERENSI & INFORMASI TAMBAHAN */}
+        {/* BAGIAN 6: DATA REFERENSI & INFORMASI TAMBAHAN (READ-ONLY OTOMATIS DARI ?ref=) */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-6">
             <h2 className="text-lg font-bold text-[#0F1E19]">
               06. Data Referensi &amp; Informasi Tambahan
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Bagian ini digunakan untuk mengetahui pihak yang memberikan informasi atau referensi
-              mengenai SIT ARAFAH.
+              Data referensi terisi secara otomatis berdasarkan tautan referral (
+              <code className="font-mono-tabular">?ref=</code>) dan bersifat tetap (hanya dapat
+              dilihat).
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Sumber Referensi <span className="text-red-600">*</span>
+                Sumber Referensi
               </label>
-              <select
-                value={referenceSource}
-                onChange={(e) => handleReferenceSourceChange(e.target.value as ReferenceSource)}
-                className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-              >
-                {REFERENCE_SOURCES.map((src) => (
-                  <option key={src} value={src}>
-                    {src}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="text"
+                readOnly
+                disabled
+                value="Guru dan Staff"
+                className="w-full px-3.5 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed select-none"
+              />
             </div>
 
-            {/* CONDITIONAL FIELD 1: Guru dan Staff */}
-            {referenceSource === 'Guru dan Staff' && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Nama Guru / Staff <span className="text-red-600">*</span>
-                </label>
-                <select
-                  value={referenceDetailPrimary}
-                  onChange={(e) => setReferenceDetailPrimary(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                >
-                  <option value="">-- Pilih Guru / Staff --</option>
-                  {activeStaffList
-                    .filter((s) => s.active)
-                    .map((staff) => (
-                      <option key={staff.id} value={staff.name}>
-                        {staff.name}
-                      </option>
-                    ))}
-                </select>
-                <span className="text-[11px] text-slate-500 mt-1 block">
-                  Daftar nama ini dikelola secara dinamis oleh Admin tanpa mengubah formulir.
-                </span>
-              </div>
-            )}
-
-            {/* CONDITIONAL FIELD 2: Orang Tua/Wali Murid */}
-            {referenceSource === 'Orang Tua/Wali Murid' && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Nama Orang Tua/Wali Murid <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={referenceDetailPrimary}
-                  onChange={(e) => setReferenceDetailPrimary(e.target.value)}
-                  placeholder="Tuliskan nama Orang Tua / Wali Murid"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                />
-              </div>
-            )}
-
-            {/* CONDITIONAL FIELD 3: Alumni */}
-            {referenceSource === 'Alumni' && (
-              <>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Nama Alumni <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={referenceDetailPrimary}
-                    onChange={(e) => setReferenceDetailPrimary(e.target.value)}
-                    placeholder="Tuliskan nama lengkap Alumni"
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Tahun Lulus <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={referenceDetailSecondary}
-                    onChange={(e) => setReferenceDetailSecondary(e.target.value)}
-                    placeholder="Contoh: 2023"
-                    className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* CONDITIONAL FIELD 4: Teman/Kerabat */}
-            {referenceSource === 'Teman/Kerabat' && (
-              <>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Nama Pemberi Referensi <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={referenceDetailPrimary}
-                    onChange={(e) => setReferenceDetailPrimary(e.target.value)}
-                    placeholder="Nama teman atau kerabat"
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Hubungan <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={referenceDetailSecondary}
-                    onChange={(e) => setReferenceDetailSecondary(e.target.value)}
-                    placeholder="Contoh: Paman / Rekan Kerja / Tetangga"
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* CONDITIONAL FIELD 5: Media Sosial */}
-            {referenceSource === 'Media Sosial' && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Media Sosial <span className="text-red-600">*</span>
-                </label>
-                <select
-                  value={referenceDetailPrimary}
-                  onChange={(e) => setReferenceDetailPrimary(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                >
-                  {SOCIAL_MEDIA_OPTIONS.map((platform) => (
-                    <option key={platform} value={platform}>
-                      {platform}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* CONDITIONAL FIELD 6: Website */}
-            {referenceSource === 'Website' && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Keterangan <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={referenceDetailPrimary}
-                  onChange={(e) => setReferenceDetailPrimary(e.target.value)}
-                  placeholder="Contoh: Pencarian Google / Website Resmi SIT Arafah"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                />
-              </div>
-            )}
-
-            {/* CONDITIONAL FIELD 7: Lainnya */}
-            {referenceSource === 'Lainnya' && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Sumber Referensi Lainnya <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={referenceDetailPrimary}
-                  onChange={(e) => setReferenceDetailPrimary(e.target.value)}
-                  placeholder="Sebutkan sumber referensi lainnya"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* INFORMASI TAMBAHAN */}
-          <div className="mt-6 pt-6 border-t border-[#E2E8E5] grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Bagaimana Anda mengetahui SIT ARAFAH? <span className="text-red-600">*</span>
+                Nama Guru / Staff
               </label>
-              <select
-                value={howDidYouKnow}
-                onChange={(e) => setHowDidYouKnow(e.target.value as HowDidYouKnowOption)}
-                className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-              >
-                {HOW_DID_YOU_KNOW_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Catatan / Informasi Tambahan
-              </label>
-              <textarea
-                rows={3}
-                value={additionalNotes}
-                onChange={(e) => setAdditionalNotes(e.target.value)}
-                placeholder="Tuliskan catatan khusus, prestasi calon peserta didik, atau pertanyaan tambahan (opsional)"
-                className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
+              <input
+                type="text"
+                readOnly
+                disabled
+                value={
+                  matchedReferralStaff
+                    ? `[${matchedReferralStaff.refCode}] ${matchedReferralStaff.name}`
+                    : '- (Tanpa Link Referral Guru/Staff)'
+                }
+                className="w-full px-3.5 py-2.5 text-sm font-semibold text-[#0F5338] bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg cursor-not-allowed select-none"
               />
+              <span className="text-[11px] text-slate-500 mt-1 block">
+                {matchedReferralStaff
+                  ? `Otomatis terdeteksi dari link ?ref=${matchedReferralStaff.refCode} (Tidak dapat diubah).`
+                  : 'Otomatis terisi apabila membuka website menggunakan link ?ref=KODE dari Guru/Staff.'}
+              </span>
             </div>
           </div>
         </section>

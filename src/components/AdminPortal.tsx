@@ -13,6 +13,9 @@ import {
   UserPlus,
   AlertCircle,
   ShieldCheck,
+  Copy,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 import {
   AdminUnitAccount,
@@ -31,6 +34,7 @@ interface AdminPortalProps {
   onDeleteRegistration: (id: string) => Promise<void>;
   onSaveStaff: (staff: StaffReferenceRecord, isEdit: boolean) => Promise<void>;
   onDeleteStaff: (id: string) => Promise<void>;
+  onTestReferralLink?: (refCode: string) => void;
 }
 
 const EDUCATION_LEVELS: EducationLevel[] = [
@@ -53,6 +57,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onDeleteRegistration,
   onSaveStaff,
   onDeleteStaff,
+  onTestReferralLink,
 }) => {
   const [loggedInAdmin, setLoggedInAdmin] = useState<AdminUnitAccount | null>(null);
   const [usernameInput, setUsernameInput] = useState('');
@@ -71,10 +76,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Staff Management state
+  const [newStaffCode, setNewStaffCode] = useState('');
   const [newStaffName, setNewStaffName] = useState('');
-  const [newStaffUnit, setNewStaffUnit] = useState<EducationUnit | 'YAYASAN'>('SD');
+  const [newStaffUnit, setNewStaffUnit] = useState<EducationUnit | 'YAYASAN'>('SMP');
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [editingStaffCode, setEditingStaffCode] = useState('');
   const [editingStaffName, setEditingStaffName] = useState('');
+  const [copiedStaffId, setCopiedStaffId] = useState<string | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,10 +167,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStaffName.trim()) return;
+    const nextDefaultCode = String(staffList.length + 1).padStart(3, '0');
+    const finalCode = newStaffCode.trim() || nextDefaultCode;
     const now = new Date().toISOString();
     const newRecord: StaffReferenceRecord = {
       id: `staff-${Date.now()}`,
       ownerId: 'admin-portal',
+      refCode: finalCode,
       name: newStaffName.trim(),
       roleUnit: newStaffUnit,
       active: true,
@@ -170,6 +181,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       updatedAtIso: now,
     };
     await onSaveStaff(newRecord, false);
+    setNewStaffCode('');
     setNewStaffName('');
   };
 
@@ -185,17 +197,30 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   };
 
   const handleSaveStaffEdit = async (staff: StaffReferenceRecord) => {
-    if (!editingStaffName.trim()) return;
+    if (!editingStaffName.trim() || !editingStaffCode.trim()) return;
     await onSaveStaff(
       {
         ...staff,
+        refCode: editingStaffCode.trim(),
         name: editingStaffName.trim(),
         updatedAtIso: new Date().toISOString(),
       },
       true
     );
     setEditingStaffId(null);
+    setEditingStaffCode('');
     setEditingStaffName('');
+  };
+
+  const handleCopyReferralUrl = (staff: StaffReferenceRecord) => {
+    const shareUrl = `https://ppdb-sit-arafah.vercel.app/?ref=${staff.refCode}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).catch(() => {});
+    }
+    setCopiedStaffId(staff.id);
+    setTimeout(() => {
+      setCopiedStaffId((prev) => (prev === staff.id ? null : prev));
+    }, 2000);
   };
 
   // ============================================================================
@@ -620,45 +645,60 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           )}
         </div>
       ) : (
-        /* TAB 2: KELOLA DAFTAR GURU & STAFF UNTUK FIELD DINAMIS FORMULIR */
+        /* TAB 2: KELOLA DAFTAR GURU & STAFF UNTUK FIELD DINAMIS FORMULIR & LINK REFERRAL */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-5 bg-white border border-[#E2E8E5] rounded-xl p-6">
+          <div className="lg:col-span-4 bg-white border border-[#E2E8E5] rounded-xl p-6">
             <h3 className="text-base font-bold text-[#0F1E19]">
-              Tambah Nama Guru / Staff Referensi
+              Tambah Link Referral Guru / Staff
             </h3>
             <p className="text-xs text-slate-600 mt-1 mb-5">
-              Nama Guru/Staff yang berstatus Aktif akan langsung muncul pada dropdown otomatis saat
-              orang tua memilih sumber referensi <strong>&quot;Guru dan Staff&quot;</strong>.
+              Setiap Guru/Staff memiliki kode unik (misal <code className="font-mono-tabular">001</code>,{' '}
+              <code className="font-mono-tabular">002</code>) sehingga link{' '}
+              <code className="font-mono-tabular">?ref=001</code> otomatis memilih nama Guru/Staff
+              tersebut pada formulir pendaftaran.
             </p>
 
             <form onSubmit={handleAddStaff} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Nama Lengkap Guru / Staff &amp; Jabatan
+                  Kode Referral (contoh: 001, 002, 006)
+                </label>
+                <input
+                  type="text"
+                  value={newStaffCode}
+                  onChange={(e) => setNewStaffCode(e.target.value)}
+                  placeholder={`Contoh: ${String(staffList.length + 1).padStart(3, '0')}`}
+                  className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Nama Guru / Staff &amp; Jenjang
                 </label>
                 <input
                   type="text"
                   required
                   value={newStaffName}
                   onChange={(e) => setNewStaffName(e.target.value)}
-                  placeholder="Contoh: Ustadz H. Salman Alfarisi, S.Pd. (Guru SD IT)"
+                  placeholder="Contoh: Mr Bayu - SMP"
                   className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Unit Tugas
+                  Unit Tugas Default
                 </label>
                 <select
                   value={newStaffUnit}
                   onChange={(e) => setNewStaffUnit(e.target.value as EducationUnit | 'YAYASAN')}
                   className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
                 >
-                  <option value="AIS">Unit AIS</option>
-                  <option value="TK">Unit TK</option>
-                  <option value="SD">Unit SD</option>
                   <option value="SMP">Unit SMP</option>
+                  <option value="SD">Unit SD</option>
+                  <option value="TK">Unit TK</option>
+                  <option value="AIS">Unit AIS</option>
                   <option value="YAYASAN">Yayasan / Umum</option>
                 </select>
               </div>
@@ -668,94 +708,158 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#0F5338] rounded-lg hover:bg-[#0B3E29] transition-colors cursor-pointer whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" />
-                Tambahkan ke Daftar Referensi
+                Tambahkan Kode &amp; Nama Referral
               </button>
             </form>
           </div>
 
-          <div className="lg:col-span-7 bg-white border border-[#E2E8E5] rounded-xl p-6">
-            <h3 className="text-base font-bold text-[#0F1E19] mb-4">
-              Daftar Guru / Staff Terdaftar ({staffList.length})
-            </h3>
+          <div className="lg:col-span-8 bg-white border border-[#E2E8E5] rounded-xl p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <h3 className="text-base font-bold text-[#0F1E19]">
+                Daftar Link Referral Guru / Staff ({staffList.length})
+              </h3>
+              <span className="text-xs text-slate-500">
+                Format Link: <code className="font-mono-tabular">https://ppdb-sit-arafah.vercel.app/?ref=KODE</code>
+              </span>
+            </div>
 
             <div className="divide-y divide-[#E2E8E5] text-xs">
-              {staffList.map((st) => (
-                <div
-                  key={st.id}
-                  className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  {editingStaffId === st.id ? (
-                    <div className="flex items-center gap-2 flex-1">
-                      <input
-                        type="text"
-                        value={editingStaffName}
-                        onChange={(e) => setEditingStaffName(e.target.value)}
-                        className="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-md"
-                      />
+              {staffList.map((st) => {
+                const referralCount = registrations.filter(
+                  (r) =>
+                    r.referenceSource === 'Guru dan Staff' &&
+                    r.referenceDetailPrimary.toLowerCase() === st.name.toLowerCase()
+                ).length;
+
+                return (
+                  <div
+                    key={st.id}
+                    className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    {editingStaffId === st.id ? (
+                      <div className="flex flex-wrap items-center gap-2 flex-1">
+                        <input
+                          type="text"
+                          value={editingStaffCode}
+                          onChange={(e) => setEditingStaffCode(e.target.value)}
+                          placeholder="Kode (001)"
+                          className="w-24 px-3 py-1.5 text-xs font-mono-tabular border border-slate-300 rounded-md"
+                        />
+                        <input
+                          type="text"
+                          value={editingStaffName}
+                          onChange={(e) => setEditingStaffName(e.target.value)}
+                          placeholder="Nama Guru - Unit"
+                          className="flex-1 min-w-[180px] px-3 py-1.5 text-xs border border-slate-300 rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSaveStaffEdit(st)}
+                          className="px-3 py-1.5 text-xs font-semibold text-white bg-[#0F5338] rounded-md cursor-pointer"
+                        >
+                          Simpan
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingStaffId(null)}
+                          className="px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono-tabular font-bold text-[#0F5338] bg-[#EBF3EF] px-2 py-0.5 rounded">
+                            ?ref={st.refCode}
+                          </span>
+                          <span
+                            className={`text-sm font-bold ${
+                              st.active ? 'text-slate-900' : 'text-slate-400 line-through'
+                            }`}
+                          >
+                            {st.name}
+                          </span>
+                          <span className="text-slate-400">·</span>
+                          <span className="font-mono-tabular text-slate-600">
+                            {referralCount} Pendaftar
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 text-slate-500 font-mono-tabular text-[11px]">
+                          <span>https://ppdb-sit-arafah.vercel.app/?ref={st.refCode}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-sans">
+                            {st.active ? 'Aktif' : 'Nonaktif'} (Unit {st.roleUnit})
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <button
                         type="button"
-                        onClick={() => handleSaveStaffEdit(st)}
-                        className="px-3 py-1.5 text-xs font-semibold text-white bg-[#0F5338] rounded-md cursor-pointer"
+                        onClick={() => handleCopyReferralUrl(st)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-[#0F5338] bg-[#EBF3EF] rounded-md hover:bg-[#DCECE4] cursor-pointer"
                       >
-                        Simpan
+                        {copiedStaffId === st.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            Tersalin
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            Salin Link
+                          </>
+                        )}
+                      </button>
+
+                      {onTestReferralLink && (
+                        <button
+                          type="button"
+                          onClick={() => onTestReferralLink(st.refCode)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 cursor-pointer"
+                          title={`Uji buka formulir dengan ?ref=${st.refCode}`}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Uji Link
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingStaffId(st.id);
+                          setEditingStaffCode(st.refCode);
+                          setEditingStaffName(st.name);
+                        }}
+                        className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 cursor-pointer"
+                      >
+                        Ubah
                       </button>
                       <button
                         type="button"
-                        onClick={() => setEditingStaffId(null)}
-                        className="px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
-                      >
-                        Batal
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <p
-                        className={`font-semibold ${
-                          st.active ? 'text-slate-900' : 'text-slate-400 line-through'
+                        onClick={() => handleToggleStaffActive(st)}
+                        className={`px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer ${
+                          st.active
+                            ? 'text-amber-800 bg-amber-50 hover:bg-amber-100'
+                            : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100'
                         }`}
                       >
-                        {st.name}
-                      </p>
-                      <div className="flex items-center gap-2 text-slate-500 mt-0.5">
-                        <span>Unit: {st.roleUnit}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{st.active ? 'Aktif di Formulir' : 'Dinonaktifkan'}</span>
-                      </div>
+                        {st.active ? 'Nonaktifkan' : 'Aktifkan'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteStaff(st.id)}
+                        className="px-2.5 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 cursor-pointer"
+                      >
+                        Hapus
+                      </button>
                     </div>
-                  )}
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingStaffId(st.id);
-                        setEditingStaffName(st.name);
-                      }}
-                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 cursor-pointer"
-                    >
-                      Ubah Nama
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStaffActive(st)}
-                      className={`px-2.5 py-1 text-xs font-medium rounded-md cursor-pointer ${
-                        st.active
-                          ? 'text-amber-800 bg-amber-50 hover:bg-amber-100'
-                          : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100'
-                      }`}
-                    >
-                      {st.active ? 'Nonaktifkan' : 'Aktifkan'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDeleteStaff(st.id)}
-                      className="px-2.5 py-1 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 cursor-pointer"
-                    >
-                      Hapus
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

@@ -223,6 +223,40 @@ export async function removeRegistrationFromFirestore(id: string) {
   }
 }
 
+export function unpackStaffFromFirestore(
+  id: string,
+  data: Record<string, unknown>,
+  fallbackIndex = 1
+): StaffReferenceRecord {
+  const rawName = String(data.name || '');
+  const parts = rawName.split(DELIM);
+  const hasCodePrefix = parts.length >= 2 && parts[0].trim().length > 0;
+  const refCode = hasCodePrefix
+    ? parts[0].trim()
+    : String(fallbackIndex).padStart(3, '0');
+  const displayName = hasCodePrefix ? parts.slice(1).join(' - ').trim() : rawName;
+
+  const createdTs = data.createdAt as Timestamp | undefined;
+  const updatedTs = data.updatedAt as Timestamp | undefined;
+
+  return {
+    id,
+    ownerId: String(data.ownerId || ''),
+    refCode,
+    name: displayName,
+    roleUnit: (data.roleUnit as EducationUnit | 'YAYASAN') || 'YAYASAN',
+    active: Boolean(data.active),
+    createdAtIso:
+      createdTs && typeof createdTs.toDate === 'function'
+        ? createdTs.toDate().toISOString()
+        : new Date().toISOString(),
+    updatedAtIso:
+      updatedTs && typeof updatedTs.toDate === 'function'
+        ? updatedTs.toDate().toISOString()
+        : new Date().toISOString(),
+  };
+}
+
 export async function saveStaffReferenceToFirestore(
   staff: StaffReferenceRecord,
   existingRawCreatedAt?: unknown
@@ -230,10 +264,13 @@ export async function saveStaffReferenceToFirestore(
   const currentUser = auth.currentUser;
   if (!currentUser) return false;
   const path = `referrals_staff/${staff.id}`;
+  const cleanCode = cleanPart(staff.refCode || '001', 15);
+  const cleanName = cleanPart(staff.name, 95);
+  const packedName = `${cleanCode}${DELIM}${cleanName}`.slice(0, 120);
   try {
     await setDoc(doc(db, 'referrals_staff', staff.id), {
       ownerId: existingRawCreatedAt ? staff.ownerId || currentUser.uid : currentUser.uid,
-      name: staff.name.trim().slice(0, 120),
+      name: packedName,
       roleUnit: staff.roleUnit,
       active: staff.active,
       createdAt: existingRawCreatedAt !== undefined ? existingRawCreatedAt : serverTimestamp(),
@@ -298,46 +335,51 @@ export const ADMIN_UNIT_ACCOUNTS: AdminUnitAccount[] = [
 
 export const INITIAL_STAFF_REFERENCES: StaffReferenceRecord[] = [
   {
-    id: 'staff-01',
+    id: 'staff-ref-001',
     ownerId: 'system-seed',
-    name: 'Ustadz H. Fauzan Hakim, M.Pd. (Guru SD IT)',
+    refCode: '001',
+    name: 'Mr Bayu - SMP',
+    roleUnit: 'SMP',
+    active: true,
+    createdAtIso: '2026-09-01T08:00:00.000Z',
+    updatedAtIso: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'staff-ref-002',
+    ownerId: 'system-seed',
+    refCode: '002',
+    name: 'MS Diah - SMP',
+    roleUnit: 'SMP',
+    active: true,
+    createdAtIso: '2026-09-01T08:00:00.000Z',
+    updatedAtIso: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'staff-ref-003',
+    ownerId: 'system-seed',
+    refCode: '003',
+    name: 'Ustadz H. Fauzan Hakim - SD',
     roleUnit: 'SD',
     active: true,
     createdAtIso: '2026-09-01T08:00:00.000Z',
     updatedAtIso: '2026-09-01T08:00:00.000Z',
   },
   {
-    id: 'staff-02',
+    id: 'staff-ref-004',
     ownerId: 'system-seed',
-    name: 'Ustadzah Hj. Nabila Rahmah, M.Pd. (Koordinator AIS)',
-    roleUnit: 'AIS',
-    active: true,
-    createdAtIso: '2026-09-01T08:00:00.000Z',
-    updatedAtIso: '2026-09-01T08:00:00.000Z',
-  },
-  {
-    id: 'staff-03',
-    ownerId: 'system-seed',
-    name: 'Ustadzah Siti Aminah, S.Pd.AUD (Kepala TK IT)',
+    refCode: '004',
+    name: 'Ustadzah Siti Aminah - TK',
     roleUnit: 'TK',
     active: true,
     createdAtIso: '2026-09-01T08:00:00.000Z',
     updatedAtIso: '2026-09-01T08:00:00.000Z',
   },
   {
-    id: 'staff-04',
+    id: 'staff-ref-005',
     ownerId: 'system-seed',
-    name: 'Ustadz Ahmad Zaki, S.Kom. (Staff Humas & SPMB)',
-    roleUnit: 'YAYASAN',
-    active: true,
-    createdAtIso: '2026-09-01T08:00:00.000Z',
-    updatedAtIso: '2026-09-01T08:00:00.000Z',
-  },
-  {
-    id: 'staff-05',
-    ownerId: 'system-seed',
-    name: 'Ustadzah Dewi Kartika, S.Si. (Guru Sains SMP IT)',
-    roleUnit: 'SMP',
+    refCode: '005',
+    name: 'Ustadzah Hj. Nabila Rahmah - AIS',
+    roleUnit: 'AIS',
     active: true,
     createdAtIso: '2026-09-01T08:00:00.000Z',
     updatedAtIso: '2026-09-01T08:00:00.000Z',

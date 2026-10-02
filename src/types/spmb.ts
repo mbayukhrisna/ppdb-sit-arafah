@@ -119,6 +119,7 @@ export interface SPMBRegistrationRecord {
 export interface StaffReferenceRecord {
   id: string;
   ownerId: string;
+  refCode: string;
   name: string;
   roleUnit: EducationUnit | 'YAYASAN';
   active: boolean;

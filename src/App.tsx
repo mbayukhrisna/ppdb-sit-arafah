@@ -28,6 +28,7 @@ import {
   INITIAL_REGISTRATIONS,
   INITIAL_STAFF_REFERENCES,
   unpackRegistrationFromFirestore,
+  unpackStaffFromFirestore,
   saveRegistrationToFirestore,
   removeRegistrationFromFirestore,
   saveStaffReferenceToFirestore,
@@ -43,7 +44,25 @@ type StudentPortalTab = 'FORM' | 'STATUS';
 type AdminRouteTab = 'ADMIN' | 'PLANNING';
 
 const LOCAL_REG_KEY = 'spmb_sit_arafah_registrations_v1';
-const LOCAL_STAFF_KEY = 'spmb_sit_arafah_staff_v1';
+const LOCAL_STAFF_KEY = 'spmb_sit_arafah_staff_v2';
+
+function extractRefCodeFromUrl(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const rawRef = params.get('ref');
+    if (rawRef) {
+      return rawRef.replace(/\/+$/, '').trim();
+    }
+    const matchHash = window.location.hash.match(/[?&]ref=([^&#/]+)/i);
+    if (matchHash && matchHash[1]) {
+      return decodeURIComponent(matchHash[1]).replace(/\/+$/, '').trim();
+    }
+  } catch {
+    // ignore URL parse errors
+  }
+  return '';
+}
 
 function checkIsAdminUrl(): boolean {
   if (typeof window === 'undefined') return false;
@@ -65,6 +84,7 @@ export default function App() {
   const [isAdminRoute, setIsAdminRoute] = useState<boolean>(() => checkIsAdminUrl());
   const [studentTab, setStudentTab] = useState<StudentPortalTab>('FORM');
   const [adminTab, setAdminTab] = useState<AdminRouteTab>('ADMIN');
+  const [activeRefCode, setActiveRefCode] = useState<string>(() => extractRefCodeFromUrl());
 
   const [statusCheckNumber, setStatusCheckNumber] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -101,10 +121,11 @@ export default function App() {
     return INITIAL_STAFF_REFERENCES;
   });
 
-  // Listen to URL changes (popstate & hashchange) for /admin route
+  // Listen to URL changes (popstate & hashchange) for /admin route and ?ref= query
   useEffect(() => {
     const syncRouteFromLocation = () => {
       setIsAdminRoute(checkIsAdminUrl());
+      setActiveRefCode(extractRefCodeFromUrl());
     };
     window.addEventListener('popstate', syncRouteFromLocation);
     window.addEventListener('hashchange', syncRouteFromLocation);
@@ -125,11 +146,19 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navigateToStudentRoute = (initialStudentTab: StudentPortalTab = 'FORM') => {
+  const navigateToStudentRoute = (
+    initialStudentTab: StudentPortalTab = 'FORM',
+    refCodeOverride?: string
+  ) => {
+    const targetRef = refCodeOverride !== undefined ? refCodeOverride : activeRefCode;
+    const targetUrl = targetRef ? `/?ref=${encodeURIComponent(targetRef)}` : '/';
     try {
-      window.history.pushState({}, '', '/');
+      window.history.pushState({}, '', targetUrl);
     } catch {
-      window.location.hash = '';
+      window.location.hash = targetRef ? `#/?ref=${encodeURIComponent(targetRef)}` : '';
+    }
+    if (refCodeOverride !== undefined) {
+      setActiveRefCode(refCodeOverride);
     }
     setIsAdminRoute(false);
     setStudentTab(initialStudentTab);
@@ -214,27 +243,14 @@ export default function App() {
         }
         const rawMap: Record<string, unknown> = {};
         const loaded: StaffReferenceRecord[] = [];
+        let idx = 1;
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
           rawMap[docSnap.id] = data.createdAt;
-          const createdTs = data.createdAt as Timestamp | undefined;
-          const updatedTs = data.updatedAt as Timestamp | undefined;
-          loaded.push({
-            id: docSnap.id,
-            ownerId: String(data.ownerId || ''),
-            name: String(data.name || ''),
-            roleUnit: (data.roleUnit as EducationUnit | 'YAYASAN') || 'YAYASAN',
-            active: Boolean(data.active),
-            createdAtIso:
-              createdTs && typeof createdTs.toDate === 'function'
-                ? createdTs.toDate().toISOString()
-                : new Date().toISOString(),
-            updatedAtIso:
-              updatedTs && typeof updatedTs.toDate === 'function'
-                ? updatedTs.toDate().toISOString()
-                : new Date().toISOString(),
-          });
+          loaded.push(unpackStaffFromFirestore(docSnap.id, data, idx));
+          idx += 1;
         });
+        loaded.sort((a, b) => a.refCode.localeCompare(b.refCode));
         setRawStaffCreatedAtMap(rawMap);
         setStaffList(loaded);
       },
@@ -416,6 +432,7 @@ export default function App() {
               onDeleteRegistration={handleDeleteRegistration}
               onSaveStaff={handleSaveStaff}
               onDeleteStaff={handleDeleteStaff}
+              onTestReferralLink={(refCode) => navigateToStudentRoute('FORM', refCode)}
             />
           ) : (
             <PlanningBlueprintView
@@ -603,6 +620,7 @@ export default function App() {
         {studentTab === 'FORM' ? (
           <RegistrationFormPortal
             activeStaffList={staffList}
+            referralCodeFromUrl={activeRefCode}
             onSubmitRegistration={handleAddRegistration}
             onNavigateToStatusCheck={handleNavigateToStatusCheck}
           />

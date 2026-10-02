@@ -565,10 +565,24 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           )}
 
           <div className="space-y-8 divide-y divide-[#E2E8E5]">
-            {/* 1. Data Calon Peserta Didik */}
+            {/* 1. Pilihan Peminatan */}
             <section className="pt-2">
+              <h3 className="text-sm font-semibold text-[#0F5338] mb-3">01. Pilihan Peminatan</h3>
+              <div className="p-4 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs text-slate-600">Jalur / Unit Pendidikan yang Dipilih:</p>
+                  <p className="text-xl font-bold text-[#0F5338] mt-0.5">Unit {unit}</p>
+                </div>
+                <span className="text-xs text-slate-600">
+                  Terhubung ke Portal Panitia Unit {unit}
+                </span>
+              </div>
+            </section>
+
+            {/* 2. Data Calon Peserta Didik */}
+            <section className="pt-6">
               <h3 className="text-sm font-semibold text-[#0F5338] mb-3">
-                01. Data Calon Peserta Didik
+                02. Data Calon Peserta Didik
               </h3>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div>
@@ -608,33 +622,23 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
               </dl>
             </section>
 
-            {/* 2. Data Sekolah & Peminatan */}
-            <section className="pt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-sm font-semibold text-[#0F5338] mb-3">02. Data Sekolah Asal</h3>
-                <dl className="space-y-2 text-sm">
-                  <div>
-                    <dt className="text-xs text-slate-500">Asal Sekolah</dt>
-                    <dd className="font-medium text-slate-900">
-                      {originSchoolName} ({originSchoolCity}, {originSchoolProvince})
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-slate-500">Tahun Lulus / Tahun Pelajaran</dt>
-                    <dd className="font-mono-tabular font-medium text-slate-900">
-                      {graduationYear}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-semibold text-[#0F5338] mb-3">03. Peminatan</h3>
-                <div className="p-4 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg">
-                  <p className="text-xs text-slate-600">Jalur / Unit Pendidikan yang Dipilih:</p>
-                  <p className="text-xl font-bold text-[#0F5338] mt-0.5">Unit {unit}</p>
+            {/* 3. Data Sekolah Asal */}
+            <section className="pt-6">
+              <h3 className="text-sm font-semibold text-[#0F5338] mb-3">03. Data Sekolah Asal</h3>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <dt className="text-xs text-slate-500">Asal Sekolah</dt>
+                  <dd className="font-medium text-slate-900 mt-0.5">
+                    {originSchoolName} ({originSchoolCity}, {originSchoolProvince})
+                  </dd>
                 </div>
-              </div>
+                <div>
+                  <dt className="text-xs text-slate-500">Tahun Lulus / Tahun Pelajaran</dt>
+                  <dd className="font-mono-tabular font-medium text-slate-900 mt-0.5">
+                    {graduationYear}
+                  </dd>
+                </div>
+              </dl>
             </section>
 
             {/* 4. Data Orang Tua */}
@@ -774,10 +778,57 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       )}
 
       <form onSubmit={validateFormBeforeSummary} className="space-y-6">
-        {/* BAGIAN 1: AKUN PENDAFTARAN */}
+        {/* BAGIAN 1: PILIHAN PEMINATAN (PALING ATAS) */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-6">
-            <h2 className="text-lg font-bold text-[#0F1E19]">01. Akun Pendaftaran</h2>
+            <h2 className="text-lg font-bold text-[#0F1E19]">01. Pilihan Peminatan</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Pilih salah satu jalur/unit pendidikan yang dituju pada proses pendaftaran SPMB SIT
+              ARAFAH.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            {(
+              [
+                { code: 'AIS', label: 'AIS', desc: 'Arafah Islamic School' },
+                { code: 'TK', label: 'TK', desc: 'Taman Kanak-Kanak IT' },
+                { code: 'SD', label: 'SD', desc: 'Sekolah Dasar IT' },
+                { code: 'SMP', label: 'SMP', desc: 'Sekolah Menengah Pertama IT' },
+              ] as const
+            ).map((item) => {
+              const selected = unit === item.code;
+              return (
+                <label
+                  key={item.code}
+                  className={`flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                    selected
+                      ? 'border-[#0F5338] bg-[#F3F7F5]'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-bold text-[#0F1E19]">{item.label}</span>
+                    <input
+                      type="radio"
+                      name="unit"
+                      value={item.code}
+                      checked={selected}
+                      onChange={() => setUnit(item.code)}
+                      className="w-4 h-4 accent-[#0F5338]"
+                    />
+                  </div>
+                  <span className="text-xs text-slate-600 mt-2">{item.desc}</span>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* BAGIAN 2: AKUN PENDAFTARAN */}
+        <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
+          <div className="border-b border-[#E2E8E5] pb-4 mb-6">
+            <h2 className="text-lg font-bold text-[#0F1E19]">02. Akun Pendaftaran</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Masukkan email yang aktif dan buat PIN/password untuk masuk ke akun pendaftaran serta
               menerima informasi seleksi.
@@ -835,10 +886,10 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 2: DATA CALON PESERTA DIDIK */}
+        {/* BAGIAN 3: DATA CALON PESERTA DIDIK */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-6">
-            <h2 className="text-lg font-bold text-[#0F1E19]">02. Data Calon Peserta Didik</h2>
+            <h2 className="text-lg font-bold text-[#0F1E19]">03. Data Calon Peserta Didik</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Tuliskan identitas lengkap calon peserta didik sesuai Akta Kelahiran atau Kartu
               Keluarga.
@@ -1073,10 +1124,10 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 3: DATA SEKOLAH ASAL */}
+        {/* BAGIAN 4: DATA SEKOLAH ASAL */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
           <div className="border-b border-[#E2E8E5] pb-4 mb-6">
-            <h2 className="text-lg font-bold text-[#0F1E19]">03. Data Sekolah Asal</h2>
+            <h2 className="text-lg font-bold text-[#0F1E19]">04. Data Sekolah Asal</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Informasi sekolah atau lembaga pendidikan sebelumnya (isi &quot;Belum Sekolah / Dari
               Rumah&quot; jika mendaftar AIS/TK dari rumah).
@@ -1153,53 +1204,6 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
                 className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
               />
             </div>
-          </div>
-        </section>
-
-        {/* BAGIAN 4: PILIHAN PEMINATAN */}
-        <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
-          <div className="border-b border-[#E2E8E5] pb-4 mb-6">
-            <h2 className="text-lg font-bold text-[#0F1E19]">04. Pilihan Peminatan</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Pilihan peminatan menentukan jalur/unit pendidikan yang dipilih pada proses
-              pendaftaran dan mengarahkan berkas ke Portal Admin jenjang terkait.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            {(
-              [
-                { code: 'AIS', label: 'AIS', desc: 'Arafah Islamic School' },
-                { code: 'TK', label: 'TK', desc: 'Taman Kanak-Kanak IT' },
-                { code: 'SD', label: 'SD', desc: 'Sekolah Dasar IT' },
-                { code: 'SMP', label: 'SMP', desc: 'Sekolah Menengah Pertama IT' },
-              ] as const
-            ).map((item) => {
-              const selected = unit === item.code;
-              return (
-                <label
-                  key={item.code}
-                  className={`flex flex-col justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
-                    selected
-                      ? 'border-[#0F5338] bg-[#F3F7F5]'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-bold text-[#0F1E19]">{item.label}</span>
-                    <input
-                      type="radio"
-                      name="unit"
-                      value={item.code}
-                      checked={selected}
-                      onChange={() => setUnit(item.code)}
-                      className="w-4 h-4 accent-[#0F5338]"
-                    />
-                  </div>
-                  <span className="text-xs text-slate-600 mt-2">{item.desc}</span>
-                </label>
-              );
-            })}
           </div>
         </section>
 

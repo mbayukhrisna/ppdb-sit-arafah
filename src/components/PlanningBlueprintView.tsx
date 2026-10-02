@@ -193,7 +193,15 @@ export const PlanningBlueprintView: React.FC<PlanningBlueprintViewProps> = ({
               </thead>
               <tbody className="divide-y divide-[#E2E8E5]">
                 <tr>
-                  <td className="py-3 px-4 font-semibold text-slate-900">1. Akun Pendaftaran</td>
+                  <td className="py-3 px-4 font-semibold text-slate-900">1. Pilihan Peminatan</td>
+                  <td className="py-3 px-4">Radio Button: AIS, TK, SD, SMP</td>
+                  <td className="py-3 px-4 text-slate-600">
+                    Ditempatkan paling atas untuk menentukan jalur/unit pendidikan dan mengarahkan
+                    data siswa ke salah satu dari 4 Portal Admin Jenjang.
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-semibold text-slate-900">2. Akun Pendaftaran</td>
                   <td className="py-3 px-4">Email Aktif, PIN/Password, Konfirmasi PIN</td>
                   <td className="py-3 px-4 text-slate-600">
                     Validasi format email &amp; pencocokan dua kolom PIN sebelum lanjut ke
@@ -202,7 +210,7 @@ export const PlanningBlueprintView: React.FC<PlanningBlueprintViewProps> = ({
                 </tr>
                 <tr>
                   <td className="py-3 px-4 font-semibold text-slate-900">
-                    2. Data Calon Peserta Didik
+                    3. Data Calon Peserta Didik
                   </td>
                   <td className="py-3 px-4">
                     NISN, Nama Lengkap, Panggilan, TTL, JK, No. WA, Alamat (RT/RW, Desa, Kec, Kota,
@@ -213,20 +221,12 @@ export const PlanningBlueprintView: React.FC<PlanningBlueprintViewProps> = ({
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-semibold text-slate-900">3. Data Sekolah Asal</td>
+                  <td className="py-3 px-4 font-semibold text-slate-900">4. Data Sekolah Asal</td>
                   <td className="py-3 px-4">
                     Nama Sekolah, Alamat, Kab/Kota, Provinsi, Tahun Lulus
                   </td>
                   <td className="py-3 px-4 text-slate-600">
                     Mendukung pendaftar pindahan/jenjang lanjut maupun pendaftar usia dini (AIS/TK).
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold text-slate-900">4. Pilihan Peminatan</td>
-                  <td className="py-3 px-4">Radio Button: AIS, TK, SD, SMP</td>
-                  <td className="py-3 px-4 text-slate-600">
-                    Menentukan routing otomatis data siswa ke salah satu dari 4 Portal Admin
-                    Jenjang.
                   </td>
                 </tr>
                 <tr>

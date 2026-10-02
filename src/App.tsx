@@ -588,12 +588,69 @@ export default function App() {
               Portal Resmi Pendaftaran &amp; Seleksi Calon Peserta Didik SIT ARAFAH
             </h2>
 
-            <p className="text-sm text-emerald-100/85 leading-relaxed max-w-2xl">
-              Selamat datang di Portal Orang Tua &amp; Calon Peserta Didik Baru SIT ARAFAH. Silakan
-              isi formulir pendaftaran secara daring dan simpan Nomor Pendaftaran (
-              <span className="font-mono-tabular text-white">SPMB-XXXXXXXX</span>) Anda untuk
-              mengecek pengumuman hasil seleksi.
+            <p className="text-sm sm:text-base text-emerald-50 leading-relaxed max-w-2xl font-medium">
+              Terimakasih Ayah dan Bunda sudah mempercayakan SIT ARAFAH sebagai sekolah pilihan.
+              Dimohon untuk melakukan pembayaran formulir dan tes terlebih dahulu sebelum mengisi
+              data dibawah ini:
             </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 pt-2 max-w-2xl">
+              <div className="sm:col-span-7 bg-white/10 border border-white/15 rounded-xl p-3.5 backdrop-blur-xs">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 mb-2">
+                  No Rekening :
+                </p>
+                <ul className="space-y-1.5 text-[11px] sm:text-xs text-white">
+                  <li className="flex items-center justify-between gap-2 whitespace-nowrap">
+                    <span className="text-emerald-100/90">- SMP IT Arafah (BRI)</span>
+                    <span className="font-mono-tabular font-semibold text-white select-all">
+                      1147-01-000-579-301
+                    </span>
+                  </li>
+                  <li className="flex items-center justify-between gap-2 whitespace-nowrap">
+                    <span className="text-emerald-100/90">- SD IT Arafah (BRI)</span>
+                    <span className="font-mono-tabular font-semibold text-white select-all">
+                      1147-01-000-461-304
+                    </span>
+                  </li>
+                  <li className="flex items-center justify-between gap-2 whitespace-nowrap">
+                    <span className="text-emerald-100/90">- TK IT Arafah (BRI)</span>
+                    <span className="font-mono-tabular font-semibold text-white select-all">
+                      1147-01-000-373-569
+                    </span>
+                  </li>
+                  <li className="flex items-center justify-between gap-2 whitespace-nowrap">
+                    <span className="text-emerald-100/90">- AIS (BSI)</span>
+                    <span className="font-mono-tabular font-semibold text-white select-all">
+                      7328590338
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="sm:col-span-5 bg-white/10 border border-white/15 rounded-xl p-3.5 backdrop-blur-xs">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 mb-2">
+                  Biaya Formulir dan Tes
+                </p>
+                <ul className="space-y-1.5 text-[11px] sm:text-xs text-white">
+                  <li className="flex items-center justify-between gap-2 whitespace-nowrap">
+                    <span className="text-emerald-100/90">- SMP</span>
+                    <span className="font-mono-tabular font-semibold text-white">250.000</span>
+                  </li>
+                  <li className="flex items-center justify-between gap-2 whitespace-nowrap">
+                    <span className="text-emerald-100/90">- SD</span>
+                    <span className="font-mono-tabular font-semibold text-white">300.000</span>
+                  </li>
+                  <li className="flex items-center justify-between gap-2 whitespace-nowrap">
+                    <span className="text-emerald-100/90">- TK</span>
+                    <span className="font-mono-tabular font-semibold text-white">200.000</span>
+                  </li>
+                  <li className="flex items-center justify-between gap-2 whitespace-nowrap">
+                    <span className="text-emerald-100/90">- AIS</span>
+                    <span className="font-mono-tabular font-semibold text-white">350.000</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           <div className="lg:col-span-5">

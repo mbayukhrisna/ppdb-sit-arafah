@@ -109,6 +109,11 @@ export interface SPMBRegistrationRecord {
   howDidYouKnow: HowDidYouKnowOption;
   additionalNotes: string;
 
+  // BUKTI TRANSFER PEMBAYARAN FORMULIR & TES (MAKS 10 MB)
+  paymentProofFileName?: string;
+  paymentProofFileSize?: number;
+  paymentProofDataUrl?: string;
+
   // PERNYATAAN PENDAFTAR
   agreedToTerms: boolean;
 

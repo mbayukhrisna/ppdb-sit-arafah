@@ -86,9 +86,12 @@ export function packRegistrationForFirestore(
     cleanPart(record.referenceDetailSecondary, 100),
     cleanPart(record.howDidYouKnow, 40),
     cleanPart(record.additionalNotes, 250),
+    cleanPart(record.paymentProofFileName || '', 120),
+    cleanPart(record.paymentProofFileSize ? String(record.paymentProofFileSize) : '', 20),
+    cleanPart(record.paymentProofDataUrl || '', 140000),
   ]
     .join(DELIM)
-    .slice(0, 600);
+    .slice(0, 149000);
 
   return {
     ownerId: uid,
@@ -176,6 +179,9 @@ export function unpackRegistrationFromFirestore(
     referenceDetailSecondary: refParts[1] || '',
     howDidYouKnow: (refParts[2] as HowDidYouKnowOption) || 'Website',
     additionalNotes: refParts[3] || '',
+    paymentProofFileName: refParts[4] || '',
+    paymentProofFileSize: refParts[5] ? Number(refParts[5]) || 0 : 0,
+    paymentProofDataUrl: refParts[6] || '',
     agreedToTerms: Boolean(data.agreedToTerms),
     createdAtIso:
       createdAtTs && typeof createdAtTs.toDate === 'function'

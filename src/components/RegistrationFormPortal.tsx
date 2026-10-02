@@ -9,6 +9,9 @@ import {
   FileCheck2,
   UserCheck,
   Link2,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
 } from 'lucide-react';
 import {
   EducationLevel,
@@ -152,6 +155,12 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   const [statement4, setStatement4] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
+  // Payment proof upload (Max 10 MB)
+  const [paymentProofFileName, setPaymentProofFileName] = useState('');
+  const [paymentProofFileSize, setPaymentProofFileSize] = useState(0);
+  const [paymentProofDataUrl, setPaymentProofDataUrl] = useState('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // Generated record after submission
   const [submittedRecord, setSubmittedRecord] = useState<SPMBRegistrationRecord | null>(null);
 
@@ -195,6 +204,82 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
     } else {
       setReferenceDetailPrimary('');
     }
+  };
+
+  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes || bytes <= 0) return '0 KB';
+    if (bytes >= 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  };
+
+  const handlePaymentProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null);
+    setErrorMessage(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Mohon unggah file berupa gambar/foto (JPG, PNG, atau WEBP).');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setUploadError(
+        `Ukuran foto bukti transfer (${formatFileSize(
+          file.size
+        )}) melebihi batas maksimal 10 MB. Silakan pilih foto dengan ukuran maksimal 10 MB.`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const rawDataUrl = typeof reader.result === 'string' ? reader.result : '';
+      if (!rawDataUrl) return;
+
+      // Compress image preview on client canvas so it stores reliably in Firestore while allowing up to 10MB source files
+      const img = new window.Image();
+      img.onload = () => {
+        const maxDim = 900;
+        let targetW = img.width;
+        let targetH = img.height;
+        if (targetW > maxDim || targetH > maxDim) {
+          if (targetW > targetH) {
+            targetH = Math.round((targetH * maxDim) / targetW);
+            targetW = maxDim;
+          } else {
+            targetW = Math.round((targetW * maxDim) / targetH);
+            targetH = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+          const compressedUrl = canvas.toDataURL('image/jpeg', 0.72);
+          setPaymentProofDataUrl(compressedUrl);
+        } else {
+          setPaymentProofDataUrl(rawDataUrl.slice(0, 120000));
+        }
+        setPaymentProofFileName(file.name);
+        setPaymentProofFileSize(file.size);
+      };
+      img.onerror = () => {
+        setPaymentProofDataUrl(rawDataUrl.slice(0, 120000));
+        setPaymentProofFileName(file.name);
+        setPaymentProofFileSize(file.size);
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleFillSampleData = () => {
@@ -254,6 +339,31 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       matchedReferralStaff ? (isParentRef ? 'Orang Tua/Wali Murid' : 'Guru/Staff') : 'Website'
     );
     setAdditionalNotes('');
+    // Generate sample transfer receipt preview canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 480;
+    canvas.height = 280;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#F3F7F5';
+      ctx.fillRect(0, 0, 480, 280);
+      ctx.strokeStyle = '#0F5338';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(12, 12, 456, 256);
+      ctx.fillStyle = '#0F5338';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('BUKTI TRANSFER BANK BRI - SIT ARAFAH', 32, 52);
+      ctx.fillStyle = '#0F1E19';
+      ctx.font = '14px monospace';
+      ctx.fillText('Tujuan : SD IT Arafah (1147-01-000-461-304)', 32, 95);
+      ctx.fillText('Nominal: Rp 300.000 (Biaya Formulir & Tes)', 32, 125);
+      ctx.fillText('Status : BERHASIL / LUNAS', 32, 155);
+      ctx.fillText('Tanggal: 02 Oktober 2026', 32, 185);
+      setPaymentProofDataUrl(canvas.toDataURL('image/jpeg', 0.8));
+      setPaymentProofFileName('bukti-transfer-bri-sdit-arafah.jpg');
+      setPaymentProofFileSize(348160);
+      setUploadError(null);
+    }
     setStatement1(true);
     setStatement2(true);
     setStatement3(true);
@@ -276,6 +386,14 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   const validateFormBeforeSummary = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (!paymentProofDataUrl || !paymentProofFileName) {
+      setErrorMessage(
+        'Mohon upload Foto Bukti Transfer pembayaran formulir dan tes terlebih dahulu (maksimal 10 MB) pada bagian paling atas sebelum mengirim formulir.'
+      );
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
     if (!accountEmail.includes('@')) {
       setErrorMessage('Mohon masukkan Email Aktif yang valid pada bagian Akun Pendaftaran.');
@@ -430,6 +548,9 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
             : 'Guru/Staff'
           : 'Website',
         additionalNotes: additionalNotes.trim(),
+        paymentProofFileName,
+        paymentProofFileSize,
+        paymentProofDataUrl,
         agreedToTerms: true,
         createdAtIso: nowIso,
         updatedAtIso: nowIso,
@@ -541,10 +662,35 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
                   {submittedRecord.referenceSource} — {submittedRecord.referenceDetailPrimary}
                   {submittedRecord.referenceDetailSecondary &&
                   submittedRecord.referenceDetailSecondary !== submittedRecord.referenceDetailPrimary
-                    ? ` · Orang Tua Siswa: ${submittedRecord.referenceDetailSecondary}`
+                    ? ` (${submittedRecord.referenceDetailSecondary})`
                     : ''}
                 </span>
               </div>
+              {submittedRecord.paymentProofFileName && (
+                <div className="sm:col-span-2 pt-2">
+                  <span className="text-xs text-slate-500 block mb-1.5">
+                    Bukti Transfer Pembayaran Formulir &amp; Tes
+                  </span>
+                  <div className="flex items-center gap-3 p-3 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg">
+                    {submittedRecord.paymentProofDataUrl && (
+                      <img
+                        src={submittedRecord.paymentProofDataUrl}
+                        alt="Bukti Transfer"
+                        className="w-16 h-16 object-cover rounded border border-slate-300 bg-white shrink-0"
+                      />
+                    )}
+                    <div className="text-xs">
+                      <p className="font-semibold text-[#0F5338]">
+                        {submittedRecord.paymentProofFileName}
+                      </p>
+                      <p className="text-slate-600 mt-0.5">
+                        Ukuran: {formatFileSize(submittedRecord.paymentProofFileSize || 0)} ·
+                        Terlampir
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -615,8 +761,36 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           )}
 
           <div className="space-y-8 divide-y divide-[#E2E8E5]">
-            {/* 1. Pilihan Peminatan */}
+            {/* 0. Bukti Transfer Pembayaran */}
             <section className="pt-2">
+              <h3 className="text-sm font-semibold text-[#0F5338] mb-3">
+                Bukti Transfer Pembayaran Formulir &amp; Tes
+              </h3>
+              <div className="p-4 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  {paymentProofDataUrl && (
+                    <img
+                      src={paymentProofDataUrl}
+                      alt="Preview Bukti Transfer"
+                      className="w-20 h-20 object-cover rounded-lg border border-slate-300 bg-white shrink-0"
+                    />
+                  )}
+                  <div>
+                    <p className="text-sm font-bold text-[#0F1E19]">{paymentProofFileName}</p>
+                    <p className="text-xs text-slate-600 mt-0.5 font-mono-tabular">
+                      Ukuran File: {formatFileSize(paymentProofFileSize)} (Maks. 10 MB)
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F5338] mt-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Foto Bukti Transfer Siap Dikirim
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 1. Pilihan Peminatan */}
+            <section className="pt-6">
               <h3 className="text-sm font-semibold text-[#0F5338] mb-3">01. Pilihan Peminatan</h3>
               <div className="p-4 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
@@ -783,6 +957,100 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   // ============================================================================
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6">
+      {/* UPLOAD FOTO BUKTI TRANSFER DAHULU (DI ATAS FORMULIR PENDAFTARAN SPMB SIT ARAFAH) */}
+      <div className="bg-white border-2 border-[#0F5338] rounded-xl p-6 sm:p-8 mb-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8E5] pb-4 mb-5">
+          <div>
+            <p className="text-xs font-bold text-[#0F5338] tracking-wide uppercase">
+              TAHAP WAJIB SEBELUM MENGISI DATA FORMULIR
+            </p>
+            <h2 className="text-xl sm:text-2xl font-bold text-[#0F1E19] mt-1">
+              Upload Foto Bukti Transfer Pembayaran Formulir &amp; Tes
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              Silakan unggah foto / tangkapan layar bukti transfer (BRI / BSI) terlebih dahulu
+              sebelum mengisi Formulir Pendaftaran SPMB SIT ARAFAH di bawah ini (Maksimal ukuran file{' '}
+              <strong className="text-[#0F1E19]">10 MB</strong>).
+            </p>
+          </div>
+          <span className="text-xs font-mono-tabular font-semibold text-[#0F5338] bg-[#EBF3EF] px-3 py-1.5 rounded-lg shrink-0 self-start sm:self-center">
+            Maks. Ukuran: 10 MB
+          </span>
+        </div>
+
+        {uploadError && (
+          <div className="mb-4 p-3.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5 text-xs text-red-800">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <span>{uploadError}</span>
+          </div>
+        )}
+
+        {!paymentProofDataUrl ? (
+          <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#97C1AE] bg-[#F3F7F5]/70 hover:bg-[#EBF3EF] transition-colors rounded-xl p-6 sm:p-8 cursor-pointer text-center">
+            <Upload className="w-8 h-8 text-[#0F5338] mb-2.5" />
+            <span className="text-sm font-bold text-[#0F1E19]">
+              Klik untuk Pilih / Upload Foto Bukti Transfer
+            </span>
+            <span className="text-xs text-slate-600 mt-1">
+              Format yang didukung: JPG, JPEG, PNG, WEBP · Ukuran Maksimal 10 MB
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handlePaymentProofChange}
+              className="hidden"
+            />
+          </label>
+        ) : (
+          <div className="p-4 bg-[#F3F7F5] border border-[#C6DDD3] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <img
+                src={paymentProofDataUrl}
+                alt="Preview Bukti Transfer"
+                className="w-24 h-24 object-cover rounded-lg border border-slate-300 bg-white shrink-0"
+              />
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0F5338]">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Bukti Transfer Berhasil Diunggah</span>
+                </div>
+                <p className="text-sm font-semibold text-slate-900 break-all">
+                  {paymentProofFileName}
+                </p>
+                <p className="text-xs text-slate-600 font-mono-tabular">
+                  Ukuran: {formatFileSize(paymentProofFileSize)} / Maksimal 10 MB
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <label className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0F5338] bg-white border border-[#C6DDD3] rounded-lg hover:bg-slate-50 cursor-pointer">
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Ganti Foto</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePaymentProofChange}
+                  className="hidden"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentProofDataUrl('');
+                  setPaymentProofFileName('');
+                  setPaymentProofFileSize(0);
+                }}
+                className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Header Banner Formulir */}
       <div className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E8E5] pb-5">

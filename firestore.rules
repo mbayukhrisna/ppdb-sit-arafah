@@ -66,7 +66,7 @@ service cloud.firestore {
       (data.fatherProfile.size() >= 1 || data.motherProfile.size() >= 1) &&
       data.referenceSource is string && data.referenceSource.size() >= 5 && data.referenceSource.size() <= 40 &&
       data.referenceSource in ['Guru dan Staff', 'Orang Tua/Wali Murid', 'Alumni', 'Teman/Kerabat', 'Media Sosial', 'Website', 'Lainnya'] &&
-      data.referenceDetail is string && data.referenceDetail.size() >= 1 && data.referenceDetail.size() <= 600 &&
+      data.referenceDetail is string && data.referenceDetail.size() >= 1 && data.referenceDetail.size() <= 150000 &&
       data.agreedToTerms is bool && data.agreedToTerms == true &&
       data.createdAt is timestamp &&
       data.updatedAt is timestamp;

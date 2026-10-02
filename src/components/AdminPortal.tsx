@@ -1134,6 +1134,49 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </strong>
                 </p>
               </div>
+
+              <div className="sm:col-span-2 pt-3 border-t border-slate-200">
+                <h4 className="font-bold text-slate-900 mb-2">
+                  BUKTI TRANSFER PEMBAYARAN FORMULIR &amp; TES
+                </h4>
+                {viewingApplicant.paymentProofDataUrl || viewingApplicant.paymentProofFileName ? (
+                  <div className="p-3.5 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg flex flex-col sm:flex-row sm:items-center gap-4">
+                    {viewingApplicant.paymentProofDataUrl && (
+                      <img
+                        src={viewingApplicant.paymentProofDataUrl}
+                        alt="Bukti Transfer Calon Siswa"
+                        className="w-36 h-36 object-contain rounded-lg border border-slate-300 bg-white shrink-0"
+                      />
+                    )}
+                    <div className="space-y-1">
+                      <p className="font-semibold text-[#0F5338]">
+                        {viewingApplicant.paymentProofFileName || 'Bukti Transfer Terlampir'}
+                      </p>
+                      {viewingApplicant.paymentProofFileSize ? (
+                        <p className="text-slate-600 font-mono-tabular">
+                          Ukuran File:{' '}
+                          {viewingApplicant.paymentProofFileSize >= 1024 * 1024
+                            ? `${(viewingApplicant.paymentProofFileSize / (1024 * 1024)).toFixed(
+                                2
+                              )} MB`
+                            : `${Math.max(
+                                1,
+                                Math.round(viewingApplicant.paymentProofFileSize / 1024)
+                              )} KB`}
+                        </p>
+                      ) : null}
+                      <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Bukti Transfer Telah Diunggah Orang Tua
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-slate-500 italic">
+                    Belum ada foto bukti transfer yang dilampirkan pada data ini.
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-[#E2E8E5] flex items-center justify-end gap-3">

@@ -128,9 +128,9 @@
         },
         "referenceDetail": {
           "type": "string",
-          "description": "Detail pemberi referensi dan informasi tambahan",
+          "description": "Detail pemberi referensi, informasi tambahan, dan bukti transfer pembayaran",
           "minLength": 1,
-          "maxLength": 600
+          "maxLength": 150000
         },
         "agreedToTerms": {
           "type": "boolean",

@@ -1,0 +1,231 @@
+{
+  "entities": {
+    "Registration": {
+      "title": "Registration",
+      "description": "Data formulir pendaftaran calon peserta didik baru SPMB SIT ARAFAH beserta informasi orang tua, referensi, dan status seleksi.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID pengguna Firebase yang membuat data pendaftaran",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "registrationNumber": {
+          "type": "string",
+          "description": "Nomor unik bukti pendaftaran dengan format SPMB-XXXXXXXX",
+          "minLength": 5,
+          "maxLength": 32,
+          "pattern": "^SPMB-[A-Z0-9]+$"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Pilihan peminatan/jenjang pendidikan",
+          "enum": ["AIS", "TK", "SD", "SMP"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Status kelulusan/verifikasi pendaftaran",
+          "enum": ["MENUNGGU_VERIFIKASI", "TERVERIFIKASI", "DITERIMA", "TIDAK_DITERIMA"]
+        },
+        "statusNotes": {
+          "type": "string",
+          "description": "Catatan verifikasi atau pengumuman dari admin jenjang",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "accountEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Email aktif akun pendaftaran",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "accountPin": {
+          "type": "string",
+          "description": "PIN atau password akun pendaftaran orang tua",
+          "minLength": 4,
+          "maxLength": 64
+        },
+        "nisn": {
+          "type": "string",
+          "description": "Nomor Induk Siswa Nasional calon peserta didik",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Nama lengkap sesuai dokumen resmi",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "nickname": {
+          "type": "string",
+          "description": "Nama panggilan calon peserta didik",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "birthPlace": {
+          "type": "string",
+          "description": "Tempat lahir calon peserta didik",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "birthDate": {
+          "type": "string",
+          "description": "Tanggal lahir calon peserta didik",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "gender": {
+          "type": "string",
+          "description": "Jenis kelamin calon peserta didik",
+          "enum": ["Laki-laki", "Perempuan"]
+        },
+        "whatsapp": {
+          "type": "string",
+          "description": "Nomor WhatsApp aktif yang dapat dihubungi",
+          "minLength": 5,
+          "maxLength": 30
+        },
+        "address": {
+          "type": "string",
+          "description": "Alamat lengkap beserta RT/RW, Kelurahan, Kecamatan, Kota, Provinsi, Kode Pos",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "originSchool": {
+          "type": "string",
+          "description": "Data sekolah asal (Nama, Alamat, Kota, Provinsi, Tahun Lulus)",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "fatherProfile": {
+          "type": "string",
+          "description": "Biodata Ayah (Nama, NIK, WA, Pendidikan, Pekerjaan, Instansi)",
+          "minLength": 0,
+          "maxLength": 600
+        },
+        "motherProfile": {
+          "type": "string",
+          "description": "Biodata Ibu (Nama, NIK, WA, Pendidikan, Pekerjaan, Instansi)",
+          "minLength": 0,
+          "maxLength": 600
+        },
+        "referenceSource": {
+          "type": "string",
+          "description": "Sumber referensi informasi SIT ARAFAH",
+          "enum": [
+            "Guru dan Staff",
+            "Orang Tua/Wali Murid",
+            "Alumni",
+            "Teman/Kerabat",
+            "Media Sosial",
+            "Website",
+            "Lainnya"
+          ]
+        },
+        "referenceDetail": {
+          "type": "string",
+          "description": "Detail pemberi referensi dan informasi tambahan",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "agreedToTerms": {
+          "type": "boolean",
+          "description": "Persetujuan atas 4 poin pernyataan pendaftar"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembuatan pendaftaran"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembaruan terakhir"
+        }
+      },
+      "required": [
+        "ownerId",
+        "registrationNumber",
+        "unit",
+        "status",
+        "statusNotes",
+        "accountEmail",
+        "accountPin",
+        "nisn",
+        "fullName",
+        "nickname",
+        "birthPlace",
+        "birthDate",
+        "gender",
+        "whatsapp",
+        "address",
+        "originSchool",
+        "fatherProfile",
+        "motherProfile",
+        "referenceSource",
+        "referenceDetail",
+        "agreedToTerms",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StaffReference": {
+      "title": "StaffReference",
+      "description": "Daftar nama Guru dan Staff SIT ARAFAH untuk pilihan referensi formulir yang dikelola oleh Admin.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID admin pembuat data",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nama lengkap Guru atau Staff",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "roleUnit": {
+          "type": "string",
+          "description": "Unit tugas Guru atau Staff",
+          "enum": ["AIS", "TK", "SD", "SMP", "YAYASAN"]
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Status aktif pada dropdown formulir"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembuatan"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembaruan"
+        }
+      },
+      "required": ["ownerId", "name", "roleUnit", "active", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/registrations/{registrationId}": {
+      "schema": {
+        "$ref": "#/entities/Registration"
+      },
+      "description": "Koleksi data pendaftaran calon peserta didik baru SPMB SIT ARAFAH"
+    },
+    "/referrals_staff/{staffId}": {
+      "schema": {
+        "$ref": "#/entities/StaffReference"
+      },
+      "description": "Koleksi daftar Guru dan Staff aktif maupun nonaktif untuk referensi pendaftaran"
+    }
+  }
+}

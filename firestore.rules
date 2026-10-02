@@ -1,0 +1,155 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerified() && request.auth.token.email == 'mbayukhrisnamurthi@gmail.com';
+    }
+
+    function isValidRegistration(data) {
+      return data.keys().hasAll([
+        'ownerId', 'registrationNumber', 'unit', 'status', 'statusNotes',
+        'accountEmail', 'accountPin', 'nisn', 'fullName', 'nickname',
+        'birthPlace', 'birthDate', 'gender', 'whatsapp', 'address',
+        'originSchool', 'fatherProfile', 'motherProfile',
+        'referenceSource', 'referenceDetail', 'agreedToTerms', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'registrationNumber', 'unit', 'status', 'statusNotes',
+        'accountEmail', 'accountPin', 'nisn', 'fullName', 'nickname',
+        'birthPlace', 'birthDate', 'gender', 'whatsapp', 'address',
+        'originSchool', 'fatherProfile', 'motherProfile',
+        'referenceSource', 'referenceDetail', 'agreedToTerms', 'createdAt', 'updatedAt'
+      ]) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_-]+$') &&
+      data.registrationNumber is string && data.registrationNumber.size() >= 5 && data.registrationNumber.size() <= 32 && data.registrationNumber.matches('^SPMB-[A-Z0-9]+$') &&
+      data.unit is string && data.unit.size() >= 2 && data.unit.size() <= 10 && data.unit in ['AIS', 'TK', 'SD', 'SMP'] &&
+      data.status is string && data.status.size() >= 5 && data.status.size() <= 30 && data.status in ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI', 'DITERIMA', 'TIDAK_DITERIMA'] &&
+      data.statusNotes is string && data.statusNotes.size() <= 500 &&
+      data.accountEmail is string && data.accountEmail.size() >= 3 && data.accountEmail.size() <= 120 &&
+      data.accountPin is string && data.accountPin.size() >= 4 && data.accountPin.size() <= 64 &&
+      data.nisn is string && data.nisn.size() >= 1 && data.nisn.size() <= 30 &&
+      data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 120 &&
+      data.nickname is string && data.nickname.size() >= 1 && data.nickname.size() <= 60 &&
+      data.birthPlace is string && data.birthPlace.size() >= 1 && data.birthPlace.size() <= 80 &&
+      data.birthDate is string && data.birthDate.size() >= 1 && data.birthDate.size() <= 20 &&
+      data.gender is string && data.gender.size() >= 5 && data.gender.size() <= 15 && data.gender in ['Laki-laki', 'Perempuan'] &&
+      data.whatsapp is string && data.whatsapp.size() >= 5 && data.whatsapp.size() <= 30 &&
+      data.address is string && data.address.size() >= 1 && data.address.size() <= 600 &&
+      data.originSchool is string && data.originSchool.size() >= 1 && data.originSchool.size() <= 600 &&
+      data.fatherProfile is string && data.fatherProfile.size() <= 600 &&
+      data.motherProfile is string && data.motherProfile.size() <= 600 &&
+      (data.fatherProfile.size() >= 1 || data.motherProfile.size() >= 1) &&
+      data.referenceSource is string && data.referenceSource.size() >= 5 && data.referenceSource.size() <= 40 &&
+      data.referenceSource in ['Guru dan Staff', 'Orang Tua/Wali Murid', 'Alumni', 'Teman/Kerabat', 'Media Sosial', 'Website', 'Lainnya'] &&
+      data.referenceDetail is string && data.referenceDetail.size() >= 1 && data.referenceDetail.size() <= 600 &&
+      data.agreedToTerms is bool && data.agreedToTerms == true &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidStaffReference(data) {
+      return data.keys().hasAll(['ownerId', 'name', 'roleUnit', 'active', 'createdAt', 'updatedAt']) &&
+      data.keys().hasOnly(['ownerId', 'name', 'roleUnit', 'active', 'createdAt', 'updatedAt']) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_-]+$') &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+      data.roleUnit is string && data.roleUnit.size() >= 2 && data.roleUnit.size() <= 15 && data.roleUnit in ['AIS', 'TK', 'SD', 'SMP', 'YAYASAN'] &&
+      data.active is bool &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    match /registrations/{registrationId} {
+      allow get: if isSignedIn() && isValidId(registrationId) && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+
+      allow create: if isVerified() &&
+        isValidId(registrationId) &&
+        isValidRegistration(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (incoming().status == 'MENUNGGU_VERIFIKASI' || isBootstrappedAdmin());
+
+      allow update: if isVerified() &&
+        isValidId(registrationId) &&
+        isValidRegistration(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().registrationNumber == existing().registrationNumber &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isBootstrappedAdmin() ||
+          (
+            existing().ownerId == request.auth.uid &&
+            existing().status != 'DITERIMA' &&
+            existing().status != 'TIDAK_DITERIMA' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'unit', 'status', 'statusNotes', 'accountEmail', 'accountPin',
+              'nisn', 'fullName', 'nickname', 'birthPlace', 'birthDate', 'gender',
+              'whatsapp', 'address', 'originSchool', 'fatherProfile', 'motherProfile',
+              'referenceSource', 'referenceDetail', 'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isVerified() &&
+        isValidId(registrationId) &&
+        (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+    }
+
+    match /referrals_staff/{staffId} {
+      allow get: if isSignedIn() && isValidId(staffId) && (existing().active == true || existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow list: if isSignedIn() && (existing().active == true || existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+
+      allow create: if isVerified() &&
+        isValidId(staffId) &&
+        isValidStaffReference(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isVerified() &&
+        isValidId(staffId) &&
+        isValidStaffReference(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isBootstrappedAdmin() ||
+          (
+            existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'roleUnit', 'active', 'updatedAt'])
+          )
+        );
+
+      allow delete: if isVerified() &&
+        isValidId(staffId) &&
+        (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+    }
+  }
+}

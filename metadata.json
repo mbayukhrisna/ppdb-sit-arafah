@@ -1,0 +1,6 @@
+{
+  "name": "SPMB SIT ARAFAH — Portal Pendaftaran & Seleksi Peserta Didik Baru",
+  "description": "Sistem Penerimaan Murid Baru (SPMB) SIT ARAFAH terpadu dengan Portal Orang Tua, Cek Status Kelulusan, Blueprint Perencanaan Sistem, dan 4 Portal Admin Jenjang (AIS, TK, SD, SMP).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

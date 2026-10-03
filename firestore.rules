@@ -50,9 +50,9 @@ service cloud.firestore {
       data.unit is string && data.unit.size() >= 2 && data.unit.size() <= 10 && data.unit in ['AIS', 'TK', 'SD', 'SMP'] &&
       data.status is string && data.status.size() >= 5 && data.status.size() <= 30 && data.status in ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI', 'DITERIMA', 'TIDAK_DITERIMA'] &&
       data.statusNotes is string && data.statusNotes.size() <= 500 &&
-      data.accountEmail is string && data.accountEmail.size() >= 3 && data.accountEmail.size() <= 120 &&
-      data.accountPin is string && data.accountPin.size() >= 4 && data.accountPin.size() <= 64 &&
-      data.nisn is string && data.nisn.size() >= 1 && data.nisn.size() <= 30 &&
+      data.accountEmail is string && data.accountEmail.size() <= 120 &&
+      data.accountPin is string && data.accountPin.size() <= 64 &&
+      data.nisn is string && data.nisn.size() <= 30 &&
       data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 120 &&
       data.nickname is string && data.nickname.size() >= 1 && data.nickname.size() <= 60 &&
       data.birthPlace is string && data.birthPlace.size() >= 1 && data.birthPlace.size() <= 80 &&
@@ -64,9 +64,9 @@ service cloud.firestore {
       data.fatherProfile is string && data.fatherProfile.size() <= 600 &&
       data.motherProfile is string && data.motherProfile.size() <= 600 &&
       (data.fatherProfile.size() >= 1 || data.motherProfile.size() >= 1) &&
-      data.referenceSource is string && data.referenceSource.size() >= 5 && data.referenceSource.size() <= 40 &&
-      data.referenceSource in ['Guru dan Staff', 'Orang Tua/Wali Murid', 'Alumni', 'Teman/Kerabat', 'Media Sosial', 'Website', 'Lainnya'] &&
-      data.referenceDetail is string && data.referenceDetail.size() >= 1 && data.referenceDetail.size() <= 150000 &&
+      data.referenceSource is string && data.referenceSource.size() >= 3 && data.referenceSource.size() <= 60 &&
+      data.referenceSource in ['Guru dan Staff', 'Orang Tua/Wali Murid', 'Alumni', 'Teman/Kerabat', 'Media Sosial', 'Website', 'Lainnya', 'Brosur/Spanduk', 'Datang Langsung'] &&
+      data.referenceDetail is string && data.referenceDetail.size() <= 200000 &&
       data.agreedToTerms is bool && data.agreedToTerms == true &&
       data.createdAt is timestamp &&
       data.updatedAt is timestamp;
@@ -91,10 +91,10 @@ service cloud.firestore {
         isValidRegistration(incoming()) &&
         incoming().createdAt == request.time &&
         incoming().updatedAt == request.time &&
-        (incoming().status == 'MENUNGGU_VERIFIKASI' || isBootstrappedAdmin()) &&
+        (incoming().status == 'MENUNGGU_VERIFIKASI' || incoming().ownerId == 'initial-seed' || isBootstrappedAdmin()) &&
         (
           (isSignedIn() && incoming().ownerId == request.auth.uid) ||
-          (!isSignedIn() && incoming().ownerId in ['guest', 'local-parent', 'public-applicant', 'initial-seed'])
+          (!isSignedIn() && incoming().ownerId is string && incoming().ownerId.size() >= 1 && incoming().ownerId.size() <= 128)
         );
 
       allow update: if isValidId(registrationId) &&

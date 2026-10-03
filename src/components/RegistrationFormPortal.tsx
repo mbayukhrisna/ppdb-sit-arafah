@@ -246,7 +246,7 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       // Compress image preview on client canvas so it stores reliably in Firestore while allowing up to 10MB source files
       const img = new window.Image();
       img.onload = () => {
-        const maxDim = 900;
+        const maxDim = 640;
         let targetW = img.width;
         let targetH = img.height;
         if (targetW > maxDim || targetH > maxDim) {
@@ -264,16 +264,16 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, targetW, targetH);
-          const compressedUrl = canvas.toDataURL('image/jpeg', 0.72);
+          const compressedUrl = canvas.toDataURL('image/jpeg', 0.65);
           setPaymentProofDataUrl(compressedUrl);
         } else {
-          setPaymentProofDataUrl(rawDataUrl.slice(0, 120000));
+          setPaymentProofDataUrl(rawDataUrl.slice(0, 100000));
         }
         setPaymentProofFileName(file.name);
         setPaymentProofFileSize(file.size);
       };
       img.onerror = () => {
-        setPaymentProofDataUrl(rawDataUrl.slice(0, 120000));
+        setPaymentProofDataUrl(rawDataUrl.slice(0, 100000));
         setPaymentProofFileName(file.name);
         setPaymentProofFileSize(file.size);
       };
@@ -477,13 +477,15 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       const cleanMother = parentMode === 'FATHER_ONLY' ? '' : motherName.trim();
 
       const isParentRef = matchedReferralStaff?.category === 'Orang Tua Siswa';
-      const effectiveReferenceSource: ReferenceSource = isParentRef
-        ? 'Orang Tua/Wali Murid'
-        : 'Guru dan Staff';
+      const effectiveReferenceSource: ReferenceSource = matchedReferralStaff
+        ? isParentRef
+          ? 'Orang Tua/Wali Murid'
+          : 'Guru dan Staff'
+        : 'Website';
 
       const effectivePrimaryDetail = matchedReferralStaff
         ? matchedReferralStaff.name
-        : '- (Tanpa Link Referral)';
+        : '- (Pendaftaran Langsung Tanpa Referral)';
 
       const newRecord: SPMBRegistrationRecord = {
         id: `reg-${Date.now()}`,

@@ -89,6 +89,7 @@ export default function App() {
   const [statusCheckNumber, setStatusCheckNumber] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [isCloudConnected, setIsCloudConnected] = useState(false);
   const [heroImgFailed, setHeroImgFailed] = useState(false);
 
   // Track raw Firestore createdAt timestamps so updates preserve immutable createdAt
@@ -206,6 +207,7 @@ export default function App() {
         });
         setRawRegCreatedAtMap(rawMap);
         setRegistrations(loaded);
+        setIsCloudConnected(true);
       },
       (error) => {
         console.warn('Firestore registrations listener (offline/cache fallback):', error);
@@ -228,6 +230,7 @@ export default function App() {
         loaded.sort((a, b) => a.refCode.localeCompare(b.refCode));
         setRawStaffCreatedAtMap(rawMap);
         setStaffList(loaded);
+        setIsCloudConnected(true);
       },
       (error) => {
         console.warn('Firestore referrals listener (offline/cache fallback):', error);
@@ -246,13 +249,9 @@ export default function App() {
       ...newRecord,
       ownerId: currentUser ? currentUser.uid : (newRecord.ownerId || 'local-parent'),
     };
-    setRegistrations((prev) => [recordToSave, ...prev]);
     // Save directly to cloud Firestore so data from HP/other devices immediately syncs to Admin
-    try {
-      await saveRegistrationToFirestore(recordToSave);
-    } catch (err) {
-      console.warn('Gagal menyimpan pendaftaran ke cloud Firestore:', err);
-    }
+    await saveRegistrationToFirestore(recordToSave);
+    setRegistrations((prev) => [recordToSave, ...prev.filter((r) => r.id !== recordToSave.id)]);
   };
 
   const handleUpdateRegistration = async (updatedRecord: SPMBRegistrationRecord) => {
@@ -415,7 +414,7 @@ export default function App() {
             <AdminPortal
               registrations={registrations}
               staffList={staffList}
-              isCloudConnected={Boolean(currentUser)}
+              isCloudConnected={isCloudConnected || Boolean(currentUser)}
               cloudUserEmail={currentUser?.email}
               onConnectCloud={() => signInWithGoogleAccount().catch(() => {})}
               onUpdateRegistration={handleUpdateRegistration}
@@ -547,7 +546,7 @@ export default function App() {
       </div>
 
       {/* Hero Institutional Banner (Student & Parent Portal) */}
-      <section className="relative overflow-hidden bg-[#0F291E] text-white border-b border-[#E2E8E5] no-print">
+      <section className="relative overflow-hidden bg-[#3399CC] text-white border-b border-[#E2E8E5] no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 space-y-3">
             <div className="flex flex-wrap items-center gap-2 text-xs text-emerald-200/90 font-medium">

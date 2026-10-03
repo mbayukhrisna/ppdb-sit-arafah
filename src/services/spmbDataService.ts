@@ -199,24 +199,36 @@ export async function saveRegistrationToFirestore(
   existingRawCreatedAt?: unknown
 ) {
   const currentUser = auth.currentUser;
-  const effectiveOwnerId = currentUser?.uid || (record.ownerId && record.ownerId.trim().length > 0 ? record.ownerId : 'local-parent');
+  const effectiveOwnerId =
+    currentUser?.uid ||
+    (record.ownerId && record.ownerId.trim().length > 0 ? record.ownerId : 'local-parent');
   const path = `registrations/${record.id}`;
-  try {
-    const payload = packRegistrationForFirestore(
-      record,
-      existingRawCreatedAt ? record.ownerId || effectiveOwnerId : effectiveOwnerId,
-      existingRawCreatedAt
-    );
-    await setDoc(doc(collection(db, 'registrations'), record.id), payload);
-    return true;
-  } catch (error) {
-    console.error('Firestore save registration error:', error);
-    handleFirestoreError(
-      error,
-      existingRawCreatedAt ? OperationType.UPDATE : OperationType.CREATE,
-      path
-    );
+
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const payload = packRegistrationForFirestore(
+        record,
+        existingRawCreatedAt ? record.ownerId || effectiveOwnerId : effectiveOwnerId,
+        existingRawCreatedAt
+      );
+      await setDoc(doc(collection(db, 'registrations'), record.id), payload);
+      return true;
+    } catch (error) {
+      lastError = error;
+      console.warn(`Firestore save registration attempt ${attempt} warning:`, error);
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    }
   }
+
+  console.error('Firestore save registration error:', lastError);
+  handleFirestoreError(
+    lastError,
+    existingRawCreatedAt ? OperationType.UPDATE : OperationType.CREATE,
+    path
+  );
 }
 
 export async function removeRegistrationFromFirestore(id: string) {
@@ -309,6 +321,14 @@ export async function removeStaffReferenceFromFirestore(id: string) {
 }
 
 export const ADMIN_UNIT_ACCOUNTS: AdminUnitAccount[] = [
+  {
+    unit: 'ALL',
+    unitTitle: 'Pusat / Yayasan (Semua Jenjang)',
+    unitSubtitle: 'Rekapitulasi & Monitoring Seluruh Calon Peserta Didik (AIS, TK, SD, SMP)',
+    username: 'admin_pusat',
+    password: 'spmb-pusat2026',
+    coordinatorName: 'Sekretariat SPMB SIT Arafah',
+  },
   {
     unit: 'AIS',
     unitTitle: 'Unit AIS (Arafah Islamic School)',

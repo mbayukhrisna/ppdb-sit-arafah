@@ -135,8 +135,10 @@ export interface StaffReferenceRecord {
   updatedAtIso: string;
 }
 
+export type AdminUnitScope = EducationUnit | 'ALL';
+
 export interface AdminUnitAccount {
-  unit: EducationUnit;
+  unit: AdminUnitScope;
   unitTitle: string;
   unitSubtitle: string;
   username: string;

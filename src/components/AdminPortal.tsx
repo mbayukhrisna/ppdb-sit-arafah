@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import {
   AdminUnitAccount,
+  AdminUnitScope,
   EducationLevel,
   EducationUnit,
   ReferralCategory,
@@ -68,6 +69,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onTestReferralLink,
 }) => {
   const [loggedInAdmin, setLoggedInAdmin] = useState<AdminUnitAccount | null>(null);
+  const [unitFilter, setUnitFilter] = useState<AdminUnitScope>('ALL');
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -108,19 +110,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     );
     if (!matched) {
       setLoginError(
-        'Username atau Password Admin tidak sesuai. Pilih salah satu dari 4 akun jenjang (AIS, TK, SD, SMP).'
+        'Username atau Password Admin tidak sesuai. Silakan gunakan salah satu akun admin di samping.'
       );
       return;
     }
     setLoggedInAdmin(matched);
-    setNewStaffUnit(matched.unit);
+    setUnitFilter(matched.unit);
+    setNewStaffUnit(matched.unit === 'ALL' ? 'SMP' : matched.unit);
   };
 
   const handleQuickLogin = (account: AdminUnitAccount) => {
     setUsernameInput(account.username);
     setPasswordInput(account.password);
     setLoggedInAdmin(account);
-    setNewStaffUnit(account.unit);
+    setUnitFilter(account.unit);
+    setNewStaffUnit(account.unit === 'ALL' ? 'SMP' : account.unit);
     setLoginError(null);
   };
 
@@ -321,18 +325,28 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {ADMIN_UNIT_ACCOUNTS.map((acc) => {
-                const countInUnit = registrations.filter((r) => r.unit === acc.unit).length;
+                const countInUnit =
+                  acc.unit === 'ALL'
+                    ? registrations.length
+                    : registrations.filter((r) => r.unit === acc.unit).length;
+                const unitTitleText =
+                  acc.unit === 'ALL' ? 'Admin Pusat (Semua Jenjang)' : `Admin ${acc.unit}`;
+                const isAll = acc.unit === 'ALL';
                 return (
                   <div
                     key={acc.unit}
-                    className="border border-[#E2E8E5] rounded-lg p-4 flex flex-col justify-between hover:border-[#0F5338] transition-colors"
+                    className={`border rounded-lg p-4 flex flex-col justify-between transition-colors ${
+                      isAll
+                        ? 'border-emerald-300 bg-emerald-50/40 hover:border-[#0F5338] sm:col-span-2'
+                        : 'border-[#E2E8E5] hover:border-[#0F5338]'
+                    }`}
                   >
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="text-base font-bold text-[#0F1E19]">
-                          Admin {acc.unit}
+                          {unitTitleText}
                         </span>
-                        <span className="text-xs font-mono-tabular text-slate-500">
+                        <span className="text-xs font-mono-tabular text-slate-500 font-semibold">
                           {countInUnit} Pendaftar
                         </span>
                       </div>
@@ -350,9 +364,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleQuickLogin(acc)}
-                      className="mt-4 w-full px-3 py-2 text-xs font-semibold text-[#0F5338] bg-[#EBF3EF] rounded-md hover:bg-[#DCECE4] transition-colors cursor-pointer whitespace-nowrap"
+                      className={`mt-4 w-full px-3 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                        isAll
+                          ? 'text-white bg-[#0F5338] hover:bg-[#0B3E29]'
+                          : 'text-[#0F5338] bg-[#EBF3EF] hover:bg-[#DCECE4]'
+                      }`}
                     >
-                      Masuk sebagai Admin {acc.unit} →
+                      Masuk sebagai {unitTitleText} →
                     </button>
                   </div>
                 );
@@ -365,9 +383,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   }
 
   // ============================================================================
-  // VIEW 2: WORKSPACE DASHBOARD ADMIN JENJANG (AIS / TK / SD / SMP)
+  // VIEW 2: WORKSPACE DASHBOARD ADMIN JENJANG (AIS / TK / SD / SMP / ALL)
   // ============================================================================
-  const unitRegistrations = registrations.filter((r) => r.unit === loggedInAdmin.unit);
+  const unitRegistrations =
+    unitFilter === 'ALL'
+      ? registrations
+      : registrations.filter((r) => r.unit === unitFilter);
+
   const filteredRegistrations = unitRegistrations.filter((r) => {
     const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
     const q = searchQuery.trim().toLowerCase();
@@ -392,32 +414,41 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E2E8E5] pb-5">
           <div>
             <div className="flex items-center gap-2 text-xs text-[#0F5338] font-semibold">
-              <span>PORTAL ADMIN JENJANG {loggedInAdmin.unit}</span>
+              <span>
+                {loggedInAdmin.unit === 'ALL'
+                  ? 'PORTAL ADMIN PUSAT (SEMUA JENJANG)'
+                  : `PORTAL ADMIN JENJANG ${loggedInAdmin.unit}`}
+              </span>
               <span aria-hidden="true">·</span>
               <span>Koordinator: {loggedInAdmin.coordinatorName}</span>
             </div>
-            <h1 className="text-2xl font-bold text-[#0F1E19] mt-1">{loggedInAdmin.unitTitle}</h1>
+            <h1 className="text-2xl font-bold text-[#0F1E19] mt-1">
+              {loggedInAdmin.unit === 'ALL'
+                ? 'Rekapitulasi Terpadu SIT Arafah'
+                : loggedInAdmin.unitTitle}
+            </h1>
             <p className="text-xs text-slate-600 mt-0.5">
-              Menampilkan khusus data calon peserta didik dengan pilihan peminatan{' '}
-              <strong>Unit {loggedInAdmin.unit}</strong>.
+              {unitFilter === 'ALL'
+                ? 'Menampilkan rekapitulasi data pendaftar dari seluruh unit (AIS, TK, SD, SMP).'
+                : `Menampilkan khusus data calon peserta didik dengan pilihan peminatan Unit ${unitFilter}.`}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Switch Unit Cepat untuk Demo */}
+            {/* Switch Filter Unit Cepat */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
-              {ADMIN_UNIT_ACCOUNTS.map((acc) => (
+              {(['ALL', 'AIS', 'TK', 'SD', 'SMP'] as const).map((u) => (
                 <button
-                  key={acc.unit}
+                  key={u}
                   type="button"
-                  onClick={() => handleQuickLogin(acc)}
+                  onClick={() => setUnitFilter(u)}
                   className={`px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                    loggedInAdmin.unit === acc.unit
+                    unitFilter === u
                       ? 'bg-[#0F5338] text-white'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {acc.unit}
+                  {u === 'ALL' ? 'Semua Unit' : u}
                 </button>
               ))}
             </div>
@@ -437,7 +468,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-5">
           <div>
             <span className="text-xs text-slate-500 block">
-              Total Pendaftar Unit {loggedInAdmin.unit}
+              Total Pendaftar {unitFilter === 'ALL' ? 'Semua Unit' : `Unit ${unitFilter}`}
             </span>
             <span className="text-2xl font-bold font-mono-tabular text-[#0F1E19] mt-0.5 block">
               {countTotal}
@@ -477,7 +508,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            Data Calon Peserta Didik Unit {loggedInAdmin.unit} ({unitRegistrations.length})
+            Data Calon Peserta Didik {unitFilter === 'ALL' ? 'Semua Unit' : `Unit ${unitFilter}`} ({unitRegistrations.length})
           </button>
           <button
             type="button"
@@ -497,7 +528,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 shadow-xs">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span className="font-semibold">Cloud Real-Time Terhubung</span>
-          <span className="text-emerald-700/80 hidden sm:inline">· Sinkronisasi HP &amp; PC Aktif</span>
+          <span className="text-emerald-700/80 hidden sm:inline">· Sinkronisasi HP &amp; PC Aktif ({registrations.length} Data)</span>
         </div>
       </div>
 
@@ -520,7 +551,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Cari nama calon siswa, No. SPMB, atau NISN di Unit ${loggedInAdmin.unit}...`}
+                placeholder={`Cari nama calon siswa, No. SPMB, atau NISN ${unitFilter === 'ALL' ? 'di semua jenjang' : `di Unit ${unitFilter}`}...`}
                 className="w-full pl-9 pr-4 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
               />
             </div>
@@ -555,11 +586,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           {filteredRegistrations.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-sm font-semibold text-slate-800">
-                Belum ada data calon peserta didik pada filter Unit {loggedInAdmin.unit} ini.
+                Belum ada data calon peserta didik pada filter {unitFilter === 'ALL' ? 'Semua Unit' : `Unit ${unitFilter}`} ini.
               </p>
               <p className="text-xs text-slate-500 mt-1">
-                Data pendaftar baru yang memilih peminatan {loggedInAdmin.unit} pada Portal Orang
-                Tua akan otomatis muncul di sini.
+                Data pendaftar baru yang dikirim oleh orang tua dari HP atau website akan otomatis muncul di sini secara real-time.
               </p>
             </div>
           ) : (
@@ -580,7 +610,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   {filteredRegistrations.map((row) => (
                     <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3.5 px-4 font-mono-tabular font-semibold text-[#0F5338] whitespace-nowrap">
-                        {row.registrationNumber}
+                        <div>{row.registrationNumber}</div>
+                        <span className="inline-block mt-0.5 px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-50 text-[#0F5338] border border-emerald-200">
+                          Unit {row.unit}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-900">{row.fullName}</div>

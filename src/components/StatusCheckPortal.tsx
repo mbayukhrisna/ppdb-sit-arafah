@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
+import { unpackRegistrationFromFirestore } from '../services/spmbDataService';
 import {
   Search,
   CheckCircle2,
@@ -50,7 +53,7 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
     }
   }, [registrations, foundRecord]);
 
-  const handleSearchByNumber = (e: React.FormEvent) => {
+  const handleSearchByNumber = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError(null);
     const cleaned = regNumberQuery.trim().toUpperCase();
@@ -60,6 +63,22 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
     }
     const match = registrations.find((r) => r.registrationNumber.toUpperCase() === cleaned);
     if (!match) {
+      try {
+        const q = query(
+          collection(db, 'registrations'),
+          where('registrationNumber', '==', cleaned)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const docSnap = snap.docs[0];
+          const loaded = unpackRegistrationFromFirestore(docSnap.id, docSnap.data());
+          setFoundRecord(loaded);
+          setSearchError(null);
+          return;
+        }
+      } catch {
+        // fallback to standard message
+      }
       setFoundRecord(null);
       setSearchError(
         `Data dengan Nomor Pendaftaran "${cleaned}" tidak ditemukan. Pastikan format sesuai bukti pendaftaran.`

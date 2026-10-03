@@ -17,6 +17,8 @@ import {
   Check,
   ExternalLink,
   Cloud,
+  FileSpreadsheet,
+  Download,
 } from 'lucide-react';
 import {
   AdminUnitAccount,
@@ -29,6 +31,10 @@ import {
   StaffReferenceRecord,
 } from '../types/spmb';
 import { ADMIN_UNIT_ACCOUNTS } from '../services/spmbDataService';
+import {
+  exportRegistrationsToExcel,
+  exportStaffReferralsToExcel,
+} from '../utils/exportToExcel';
 
 interface AdminPortalProps {
   registrations: SPMBRegistrationRecord[];
@@ -556,29 +562,65 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               />
             </div>
 
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg overflow-x-auto">
-              {(
-                [
-                  { id: 'ALL', label: 'Semua Status' },
-                  { id: 'MENUNGGU_VERIFIKASI', label: 'Menunggu' },
-                  { id: 'TERVERIFIKASI', label: 'Terverifikasi' },
-                  { id: 'DITERIMA', label: 'Diterima' },
-                  { id: 'TIDAK_DITERIMA', label: 'Tidak Diterima' },
-                ] as const
-              ).map((st) => (
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg overflow-x-auto">
+                {(
+                  [
+                    { id: 'ALL', label: 'Semua Status' },
+                    { id: 'MENUNGGU_VERIFIKASI', label: 'Menunggu' },
+                    { id: 'TERVERIFIKASI', label: 'Terverifikasi' },
+                    { id: 'DITERIMA', label: 'Diterima' },
+                    { id: 'TIDAK_DITERIMA', label: 'Tidak Diterima' },
+                  ] as const
+                ).map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setStatusFilter(st.id)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                      statusFilter === st.id
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tombol Export Excel Spreadsheet */}
+              <div className="flex items-center gap-1.5">
                 <button
-                  key={st.id}
                   type="button"
-                  onClick={() => setStatusFilter(st.id)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                    statusFilter === st.id
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  onClick={() =>
+                    exportRegistrationsToExcel(
+                      filteredRegistrations,
+                      unitFilter === 'ALL'
+                        ? `Semua_Unit_${statusFilter}`
+                        : `Unit_${unitFilter}_${statusFilter}`
+                    )
+                  }
+                  title="Unduh data calon peserta didik yang tampil dalam format Excel Spreadsheet (.xlsx)"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0F5338] hover:bg-[#0B3E29] rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-xs"
                 >
-                  {st.label}
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Export Excel ({filteredRegistrations.length})</span>
                 </button>
-              ))}
+
+                {filteredRegistrations.length !== registrations.length && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      exportRegistrationsToExcel(registrations, 'Seluruh_Pendaftar_Semua_Unit')
+                    }
+                    title="Unduh seluruh data pendaftar tanpa filter dalam format Excel Spreadsheet (.xlsx)"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    <Download className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="hidden sm:inline">Export Semua ({registrations.length})</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -815,38 +857,50 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs">
-                {(
-                  [
-                    { id: 'ALL', label: `Semua (${staffList.length})` },
-                    {
-                      id: 'Guru dan Staff',
-                      label: `Guru & Staff (${
-                        staffList.filter((s) => (s.category || 'Guru dan Staff') === 'Guru dan Staff')
-                          .length
-                      })`,
-                    },
-                    {
-                      id: 'Orang Tua Siswa',
-                      label: `Orang Tua Siswa (${
-                        staffList.filter((s) => s.category === 'Orang Tua Siswa').length
-                      })`,
-                    },
-                  ] as const
-                ).map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setReferralCategoryFilter(tab.id)}
-                    className={`px-2.5 py-1.5 font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                      referralCategoryFilter === tab.id
-                        ? 'bg-white text-[#0F1E19] shadow-xs font-semibold'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs">
+                  {(
+                    [
+                      { id: 'ALL', label: `Semua (${staffList.length})` },
+                      {
+                        id: 'Guru dan Staff',
+                        label: `Guru & Staff (${
+                          staffList.filter((s) => (s.category || 'Guru dan Staff') === 'Guru dan Staff')
+                            .length
+                        })`,
+                      },
+                      {
+                        id: 'Orang Tua Siswa',
+                        label: `Orang Tua Siswa (${
+                          staffList.filter((s) => s.category === 'Orang Tua Siswa').length
+                        })`,
+                      },
+                    ] as const
+                  ).map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setReferralCategoryFilter(tab.id)}
+                      className={`px-2.5 py-1.5 font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                        referralCategoryFilter === tab.id
+                          ? 'bg-white text-[#0F1E19] shadow-xs font-semibold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => exportStaffReferralsToExcel(staffList, registrations)}
+                  title="Unduh daftar link referral dan perolehan pendaftar dalam format Excel Spreadsheet (.xlsx)"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0F5338] hover:bg-[#0B3E29] rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Export Excel</span>
+                </button>
               </div>
             </div>
 

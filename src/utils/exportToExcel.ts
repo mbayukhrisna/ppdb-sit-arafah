@@ -168,7 +168,8 @@ export function exportRegistrationsToExcel(
 
 export function exportStaffReferralsToExcel(
   staffList: StaffReferenceRecord[],
-  registrations: SPMBRegistrationRecord[]
+  registrations: SPMBRegistrationRecord[],
+  unitLabel = 'Semua_Unit'
 ) {
   if (!staffList || staffList.length === 0) {
     return;
@@ -217,7 +218,8 @@ export function exportStaffReferralsToExcel(
   const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(
     now.getDate()
   ).padStart(2, '0')}`;
-  const filename = `Data_Referral_Staff_Ortu_SIT_Arafah_${dateStr}.xlsx`;
+  const cleanUnit = unitLabel.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `Data_Referral_${cleanUnit}_SIT_Arafah_${dateStr}.xlsx`;
 
   XLSX.writeFile(wb, filename);
 }

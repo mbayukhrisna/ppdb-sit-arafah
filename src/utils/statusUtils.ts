@@ -1,4 +1,8 @@
-import { SelectionStatus } from '../types/spmb';
+import {
+  SelectionStatus,
+  StaffReferenceRecord,
+  AdminUnitScope,
+} from '../types/spmb';
 
 export const STATUS_LABELS: Record<SelectionStatus, string> = {
   MENUNGGU_VERIFIKASI: 'Menunggu verifikasi',
@@ -49,4 +53,65 @@ export function getEffectiveStatusNote(
   }
 
   return trimmed;
+}
+
+/**
+ * Checks whether a staff/parent referral record belongs to the specified unit.
+ * - 'ALL': returns true (admin pusat can see all).
+ * - Matches direct `staff.roleUnit`.
+ * - Also checks name tags (e.g. "- TK", "– TK", "(TK)", "- SD", "- AIS", "- SMP") as fallback.
+ */
+export function isStaffForUnit(
+  staff: StaffReferenceRecord,
+  targetUnit: AdminUnitScope
+): boolean {
+  if (targetUnit === 'ALL') return true;
+
+  // Direct match on roleUnit
+  if (staff.roleUnit === targetUnit) return true;
+
+  // Pattern detection in name
+  const nameNorm = (staff.name || '').toLowerCase();
+  if (targetUnit === 'TK') {
+    return (
+      nameNorm.includes('- tk') ||
+      nameNorm.includes('– tk') ||
+      nameNorm.includes('(tk)') ||
+      nameNorm.includes('[tk]') ||
+      nameNorm.includes('unit tk') ||
+      nameNorm.endsWith(' tk')
+    );
+  }
+  if (targetUnit === 'SD') {
+    return (
+      nameNorm.includes('- sd') ||
+      nameNorm.includes('– sd') ||
+      nameNorm.includes('(sd)') ||
+      nameNorm.includes('[sd]') ||
+      nameNorm.includes('unit sd') ||
+      nameNorm.endsWith(' sd')
+    );
+  }
+  if (targetUnit === 'AIS') {
+    return (
+      nameNorm.includes('- ais') ||
+      nameNorm.includes('– ais') ||
+      nameNorm.includes('(ais)') ||
+      nameNorm.includes('[ais]') ||
+      nameNorm.includes('unit ais') ||
+      nameNorm.endsWith(' ais')
+    );
+  }
+  if (targetUnit === 'SMP') {
+    return (
+      nameNorm.includes('- smp') ||
+      nameNorm.includes('– smp') ||
+      nameNorm.includes('(smp)') ||
+      nameNorm.includes('[smp]') ||
+      nameNorm.includes('unit smp') ||
+      nameNorm.endsWith(' smp')
+    );
+  }
+
+  return false;
 }

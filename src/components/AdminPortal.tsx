@@ -39,6 +39,7 @@ import {
   STATUS_DEFAULT_NOTES,
   getStatusLabel,
   getEffectiveStatusNote,
+  isStaffForUnit,
 } from '../utils/statusUtils';
 
 interface AdminPortalProps {
@@ -109,6 +110,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [referralCategoryFilter, setReferralCategoryFilter] = useState<'ALL' | ReferralCategory>(
     'ALL'
   );
+  const [pusatReferralUnitFilter, setPusatReferralUnitFilter] = useState<AdminUnitScope>('ALL');
   const [copiedStaffId, setCopiedStaffId] = useState<string | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -127,6 +129,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }
     setLoggedInAdmin(matched);
     setUnitFilter(matched.unit);
+    setPusatReferralUnitFilter('ALL');
     setNewStaffUnit(matched.unit === 'ALL' ? 'SMP' : matched.unit);
   };
 
@@ -135,6 +138,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     setPasswordInput(account.password);
     setLoggedInAdmin(account);
     setUnitFilter(account.unit);
+    setPusatReferralUnitFilter('ALL');
     setNewStaffUnit(account.unit === 'ALL' ? 'SMP' : account.unit);
     setLoginError(null);
   };
@@ -196,6 +200,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStaffName.trim()) return;
+    const targetStaffUnit: EducationUnit | 'YAYASAN' =
+      loggedInAdmin && loggedInAdmin.unit !== 'ALL'
+        ? loggedInAdmin.unit
+        : newStaffUnit;
     const nextDefaultCode = String(staffList.length + 1).padStart(3, '0');
     const finalCode = newStaffCode.trim() || nextDefaultCode;
     const now = new Date().toISOString();
@@ -205,7 +213,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       refCode: finalCode,
       name: newStaffName.trim(),
       category: newStaffCategory,
-      roleUnit: newStaffUnit,
+      roleUnit: targetStaffUnit,
       active: true,
       createdAtIso: now,
       updatedAtIso: now,
@@ -396,10 +404,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // ============================================================================
   // VIEW 2: WORKSPACE DASHBOARD ADMIN JENJANG (AIS / TK / SD / SMP / ALL)
   // ============================================================================
+  // Unit scope for applicants:
+  // - Unit admin is locked to their unit (AIS, TK, SD, SMP).
+  // - Admin Pusat can view ALL or switch between units.
+  const currentApplicantUnit: AdminUnitScope =
+    loggedInAdmin.unit === 'ALL' ? unitFilter : loggedInAdmin.unit;
+
   const unitRegistrations =
-    unitFilter === 'ALL'
+    currentApplicantUnit === 'ALL'
       ? registrations
-      : registrations.filter((r) => r.unit === unitFilter);
+      : registrations.filter((r) => r.unit === currentApplicantUnit);
 
   const filteredRegistrations = unitRegistrations.filter((r) => {
     const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
@@ -412,6 +426,25 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       r.originSchoolName.toLowerCase().includes(q);
     return matchesStatus && matchesQuery;
   });
+
+  // Referrals scoped strictly by admin account:
+  // - Admin TK -> hanya melihat referal TK
+  // - Admin SD -> hanya melihat referal SD
+  // - Admin AIS -> hanya melihat referal AIS
+  // - Admin SMP -> hanya melihat referal SMP
+  // - Admin Pusat -> bisa melihat semua referal (atau filter perjenjang)
+  const effectiveReferralUnitScope: AdminUnitScope =
+    loggedInAdmin.unit === 'ALL' ? pusatReferralUnitFilter : loggedInAdmin.unit;
+
+  const unitStaffList = staffList.filter((st) =>
+    isStaffForUnit(st, effectiveReferralUnitScope)
+  );
+
+  const filteredStaff = unitStaffList.filter((st) =>
+    referralCategoryFilter === 'ALL'
+      ? true
+      : (st.category || 'Guru dan Staff') === referralCategoryFilter
+  );
 
   const countTotal = unitRegistrations.length;
   const countWaiting = unitRegistrations.filter((r) => r.status === 'MENUNGGU_VERIFIKASI').length;
@@ -440,9 +473,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 : loggedInAdmin.unitTitle}
             </h1>
             <p className="text-xs text-slate-600 mt-0.5">
-              {unitFilter === 'ALL'
+              {currentApplicantUnit === 'ALL'
                 ? 'Menampilkan rekapitulasi data pendaftar dari seluruh unit (AIS, TK, SD, SMP).'
-                : `Menampilkan khusus data calon peserta didik dengan pilihan peminatan Unit ${unitFilter}.`}
+                : `Menampilkan khusus data calon peserta didik dengan pilihan peminatan Unit ${currentApplicantUnit}.`}
             </p>
           </div>
 
@@ -453,7 +486,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               onClick={() =>
                 exportRegistrationsToExcel(
                   unitRegistrations,
-                  unitFilter === 'ALL' ? 'Semua_Unit' : `Unit_${unitFilter}`
+                  currentApplicantUnit === 'ALL' ? 'Semua_Unit' : `Unit_${currentApplicantUnit}`
                 )
               }
               title="Unduh seluruh data pendaftar dalam format Excel Spreadsheet (.xlsx)"
@@ -463,23 +496,45 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               <span>Export Excel ({unitRegistrations.length})</span>
             </button>
 
-            {/* Switch Filter Unit Cepat */}
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
-              {(['ALL', 'AIS', 'TK', 'SD', 'SMP'] as const).map((u) => (
-                <button
-                  key={u}
-                  type="button"
-                  onClick={() => setUnitFilter(u)}
-                  className={`px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                    unitFilter === u
-                      ? 'bg-[#0F5338] text-white'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {u === 'ALL' ? 'Semua Unit' : u}
-                </button>
-              ))}
-            </div>
+            {/* Switch Filter Unit Cepat - Khusus Admin Pusat */}
+            {loggedInAdmin.unit === 'ALL' ? (
+              <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
+                {(['ALL', 'AIS', 'TK', 'SD', 'SMP'] as const).map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setUnitFilter(u)}
+                    className={`px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                      unitFilter === u
+                        ? 'bg-[#0F5338] text-white'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {u === 'ALL' ? 'Semua Unit' : u}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="px-3.5 py-2 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg text-xs font-bold text-[#0F5338] flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#0F5338]"></span>
+                <span>Unit {loggedInAdmin.unit}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() =>
+                exportRegistrationsToExcel(
+                  unitRegistrations,
+                  unitFilter === 'ALL' ? 'Semua_Unit' : `Unit_${unitFilter}`
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0F5338] hover:bg-[#0B3E29] rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+              title="Unduh seluruh data pendaftar dalam format Excel Spreadsheet (.xlsx)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Export Excel ({unitRegistrations.length})</span>
+            </button>
 
             <button
               type="button"
@@ -542,7 +597,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            Data Calon Peserta Didik {unitFilter === 'ALL' ? 'Semua Unit' : `Unit ${unitFilter}`} ({unitRegistrations.length})
+            Data Calon Peserta Didik {currentApplicantUnit === 'ALL' ? 'Semua Unit' : `Unit ${currentApplicantUnit}`} ({unitRegistrations.length})
           </button>
           <button
             type="button"
@@ -554,7 +609,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             }`}
           >
             <UserPlus className="w-3.5 h-3.5" />
-            Kelola Link ?ref= Guru/Staff &amp; Orang Tua Siswa ({staffList.length})
+            {loggedInAdmin.unit === 'ALL'
+              ? `Kelola Link ?ref= Semua Jenjang (${unitStaffList.length})`
+              : `Kelola Link ?ref= Unit ${loggedInAdmin.unit} (${unitStaffList.length})`}
           </button>
         </div>
 
@@ -807,7 +864,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   type="text"
                   value={newStaffCode}
                   onChange={(e) => setNewStaffCode(e.target.value)}
-                  placeholder={`Contoh: ${String(staffList.length + 1).padStart(3, '0')}`}
+                  placeholder={`Contoh: ${String(unitStaffList.length + 1).padStart(3, '0')}`}
                   className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
                 />
               </div>
@@ -836,9 +893,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   value={newStaffName}
                   onChange={(e) => setNewStaffName(e.target.value)}
                   placeholder={
-                    newStaffCategory === 'Orang Tua Siswa'
-                      ? 'Contoh: Bunda Aisyah - SD'
-                      : 'Contoh: Mr Bayu - SMP'
+                    loggedInAdmin.unit !== 'ALL'
+                      ? newStaffCategory === 'Orang Tua Siswa'
+                        ? `Contoh: Bunda Aisyah - ${loggedInAdmin.unit}`
+                        : `Contoh: Ustadzah Fatimah - ${loggedInAdmin.unit}`
+                      : newStaffCategory === 'Orang Tua Siswa'
+                        ? 'Contoh: Bunda Aisyah - SD'
+                        : 'Contoh: Mr Bayu - SMP'
                   }
                   className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
                 />
@@ -846,19 +907,28 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Unit Tugas Default
+                  Unit Tugas Jenjang
                 </label>
-                <select
-                  value={newStaffUnit}
-                  onChange={(e) => setNewStaffUnit(e.target.value as EducationUnit | 'YAYASAN')}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                >
-                  <option value="SMP">Unit SMP</option>
-                  <option value="SD">Unit SD</option>
-                  <option value="TK">Unit TK</option>
-                  <option value="AIS">Unit AIS</option>
-                  <option value="YAYASAN">Yayasan / Umum</option>
-                </select>
+                {loggedInAdmin.unit === 'ALL' ? (
+                  <select
+                    value={newStaffUnit}
+                    onChange={(e) => setNewStaffUnit(e.target.value as EducationUnit | 'YAYASAN')}
+                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
+                  >
+                    <option value="TK">Unit TK</option>
+                    <option value="SD">Unit SD</option>
+                    <option value="AIS">Unit AIS</option>
+                    <option value="SMP">Unit SMP</option>
+                    <option value="YAYASAN">Yayasan / Umum</option>
+                  </select>
+                ) : (
+                  <div className="w-full px-3.5 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-slate-800 font-semibold flex items-center justify-between">
+                    <span>Unit {loggedInAdmin.unit}</span>
+                    <span className="text-[11px] font-normal text-slate-500">
+                      Terkunci untuk Admin {loggedInAdmin.unit}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <button
@@ -872,16 +942,19 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
 
           <div className="lg:col-span-8 bg-white border border-[#E2E8E5] rounded-xl p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-[#E2E8E5]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-[#E2E8E5]">
               <div>
                 <h3 className="text-base font-bold text-[#0F1E19]">
-                  Daftar Link Referral Guru/Staff &amp; Orang Tua Siswa ({staffList.length})
+                  {loggedInAdmin.unit === 'ALL'
+                    ? pusatReferralUnitFilter === 'ALL'
+                      ? `Daftar Link Referral Semua Jenjang (${unitStaffList.length})`
+                      : `Daftar Link Referral Jenjang ${pusatReferralUnitFilter} (${unitStaffList.length})`
+                    : `Daftar Link Referral Unit ${loggedInAdmin.unit} (${unitStaffList.length})`}
                 </h3>
                 <span className="text-xs text-slate-500 block mt-0.5">
-                  Format Link:{' '}
-                  <code className="font-mono-tabular">
-                    https://ppdb-sit-arafah.vercel.app/?ref=KODE
-                  </code>
+                  {loggedInAdmin.unit === 'ALL'
+                    ? 'Admin Pusat: Menampilkan seluruh link referral guru/staff & orang tua semua jenjang.'
+                    : `Admin ${loggedInAdmin.unit}: Khusus menampilkan link referral civitas & orang tua Unit ${loggedInAdmin.unit}.`}
                 </span>
               </div>
 
@@ -889,18 +962,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs">
                   {(
                     [
-                      { id: 'ALL', label: `Semua (${staffList.length})` },
+                      { id: 'ALL', label: `Semua (${unitStaffList.length})` },
                       {
                         id: 'Guru dan Staff',
                         label: `Guru & Staff (${
-                          staffList.filter((s) => (s.category || 'Guru dan Staff') === 'Guru dan Staff')
+                          unitStaffList.filter((s) => (s.category || 'Guru dan Staff') === 'Guru dan Staff')
                             .length
                         })`,
                       },
                       {
                         id: 'Orang Tua Siswa',
                         label: `Orang Tua Siswa (${
-                          staffList.filter((s) => s.category === 'Orang Tua Siswa').length
+                          unitStaffList.filter((s) => s.category === 'Orang Tua Siswa').length
                         })`,
                       },
                     ] as const
@@ -922,24 +995,62 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => exportStaffReferralsToExcel(staffList, registrations)}
+                  onClick={() =>
+                    exportStaffReferralsToExcel(
+                      unitStaffList,
+                      registrations,
+                      loggedInAdmin.unit === 'ALL'
+                        ? `Semua_Jenjang_${pusatReferralUnitFilter}`
+                        : `Unit_${loggedInAdmin.unit}`
+                    )
+                  }
                   title="Unduh daftar link referral dan perolehan pendaftar dalam format Excel Spreadsheet (.xlsx)"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0F5338] hover:bg-[#0B3E29] rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-xs"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>Export Excel</span>
+                  <span>Export Excel ({unitStaffList.length})</span>
                 </button>
               </div>
             </div>
 
+            {/* Filter Jenjang Khusus Admin Pusat */}
+            {loggedInAdmin.unit === 'ALL' && (
+              <div className="flex items-center gap-1.5 p-1.5 bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg text-xs mb-4 overflow-x-auto">
+                <span className="text-[11px] font-semibold text-[#0F5338] px-2 whitespace-nowrap">
+                  Filter Jenjang (Admin Pusat):
+                </span>
+                {(['ALL', 'AIS', 'TK', 'SD', 'SMP'] as const).map((u) => {
+                  const uCount = staffList.filter((s) => isStaffForUnit(s, u)).length;
+                  return (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setPusatReferralUnitFilter(u)}
+                      className={`px-2.5 py-1 font-semibold rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                        pusatReferralUnitFilter === u
+                          ? 'bg-[#0F5338] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900 bg-white/70'
+                      }`}
+                    >
+                      {u === 'ALL' ? `Semua Jenjang (${staffList.length})` : `${u} (${uCount})`}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="divide-y divide-[#E2E8E5] text-xs">
-              {staffList
-                .filter((st) =>
-                  referralCategoryFilter === 'ALL'
-                    ? true
-                    : (st.category || 'Guru dan Staff') === referralCategoryFilter
-                )
-                .map((st) => {
+              {filteredStaff.length === 0 ? (
+                <div className="py-12 text-center text-slate-500">
+                  <p className="font-semibold text-slate-800">
+                    Belum ada link referral untuk Unit {loggedInAdmin.unit === 'ALL' ? pusatReferralUnitFilter : loggedInAdmin.unit}.
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Gunakan formulir di sebelah kiri untuk menambahkan link referral Guru/Staff atau Orang Tua Unit {loggedInAdmin.unit === 'ALL' ? (pusatReferralUnitFilter === 'ALL' ? 'terkait' : pusatReferralUnitFilter) : loggedInAdmin.unit}.
+                  </p>
+                </div>
+              ) : (
+                filteredStaff.map((st) => {
                   const referralCount = registrations.filter(
                     (r) =>
                       r.referenceDetailPrimary.toLowerCase() === st.name.toLowerCase() ||
@@ -1089,7 +1200,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     </div>
                   </div>
                 );
-              })}
+              }))}
             </div>
           </div>
         </div>
@@ -1350,6 +1461,20 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
 
             <div className="mt-6 pt-4 border-t border-[#E2E8E5] flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  exportRegistrationsToExcel(
+                    [viewingApplicant],
+                    `Peserta_${viewingApplicant.registrationNumber}`
+                  )
+                }
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0F5338] hover:bg-[#0B3E29] rounded-lg transition-colors cursor-pointer shadow-xs"
+                title="Unduh rincian lengkap siswa ini dalam format Excel (.xlsx)"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+                Export Excel (.xlsx)
+              </button>
               <button
                 type="button"
                 onClick={() => {

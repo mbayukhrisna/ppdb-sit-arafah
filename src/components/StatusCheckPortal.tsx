@@ -11,9 +11,44 @@ import {
   Printer,
   KeyRound,
   AlertCircle,
+  MessageCircle,
+  Phone,
 } from 'lucide-react';
 import { SPMBRegistrationRecord } from '../types/spmb';
 import { getEffectiveStatusNote } from '../utils/statusUtils';
+
+export const ADMIN_WHATSAPP_CONTACTS = [
+  {
+    unit: 'TK',
+    fullName: 'TK IT Arafah',
+    phone: '0878-8773-0314',
+    cleanNumber: '6287887730314',
+  },
+  {
+    unit: 'SD Gedung A',
+    fullName: 'SD IT Arafah (Gedung A)',
+    phone: '0815-4961-5571',
+    cleanNumber: '6281549615571',
+  },
+  {
+    unit: 'SD Gedung B',
+    fullName: 'SD IT Arafah (Gedung B)',
+    phone: '0821-2241-7335',
+    cleanNumber: '6282122417335',
+  },
+  {
+    unit: 'AIS',
+    fullName: 'Arafah Islamic School (AIS)',
+    phone: '0822-5800-0330',
+    cleanNumber: '6282258000330',
+  },
+  {
+    unit: 'SMP',
+    fullName: 'SMP IT Arafah',
+    phone: '0821-1314-6800',
+    cleanNumber: '6282113146800',
+  },
+];
 
 interface StatusCheckPortalProps {
   registrations: SPMBRegistrationRecord[];
@@ -360,6 +395,80 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
           </div>
         </div>
       )}
+
+      {/* FOOTER INFORMASI & KONTAK WHATSAPP ADMIN SIT ARAFAH */}
+      <div className="mt-8 pt-6 border-t border-[#E2E8E5] no-print">
+        <div className="bg-white border border-[#E2E8E5] rounded-xl p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-4 border-b border-[#E2E8E5]">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#0F5338] shrink-0">
+                <MessageCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-[#0F1E19]">
+                  No Admin SIT ARAFAH
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Untuk informasi pendaftaran, verifikasi data, atau hasil seleksi, hubungi Admin via WhatsApp:
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-emerald-800 font-medium bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 w-fit">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Layanan Panitia SPMB</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {ADMIN_WHATSAPP_CONTACTS.map((item) => {
+              const isMatchedUnit =
+                foundRecord &&
+                (foundRecord.unit === item.unit ||
+                  (foundRecord.unit === 'SD' && item.unit.startsWith('SD')));
+
+              return (
+                <a
+                  key={item.unit}
+                  href={`https://wa.me/${item.cleanNumber}?text=${encodeURIComponent(
+                    `Assalamu'alaikum Admin SIT ARAFAH (${item.unit}), saya ingin menanyakan informasi pendaftaran/status seleksi siswa.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center justify-between p-3.5 rounded-lg border transition-all group cursor-pointer ${
+                    isMatchedUnit
+                      ? 'border-[#0F5338] bg-[#F3F7F5] ring-1 ring-[#0F5338]/30 shadow-xs'
+                      : 'border-slate-200 bg-slate-50/70 hover:bg-emerald-50/60 hover:border-emerald-300'
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-slate-900 group-hover:text-[#0F5338] transition-colors">
+                        {item.unit}
+                      </span>
+                      {isMatchedUnit && (
+                        <span className="text-[10px] font-semibold text-[#0F5338] bg-emerald-100 px-1.5 py-0.5 rounded">
+                          Unit Terpilih
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs font-mono-tabular font-semibold text-[#0F5338] block mt-0.5">
+                      {item.phone}
+                    </span>
+                    <span className="text-[11px] text-slate-500 block truncate">
+                      {item.fullName}
+                    </span>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0F5338] bg-white px-2.5 py-1.5 rounded-md border border-emerald-200 shadow-xs group-hover:bg-[#0F5338] group-hover:text-white transition-colors shrink-0">
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>Chat WA</span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

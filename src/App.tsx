@@ -680,39 +680,106 @@ export default function App() {
 
       {/* Quiet Institutional Footer */}
       <footer className="bg-white border-t border-[#E2E8E5] py-6 px-4 sm:px-8 text-xs text-slate-500 no-print">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <strong className="text-[#0F1E19]">Panitia SPMB SIT ARAFAH</strong> · Sistem Penerimaan
-            Murid Baru Terpadu (AIS, TK, SD, SMP)
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setStudentTab('FORM')}
-              className="hover:text-[#0F5338] cursor-pointer"
-            >
-              Formulir Pendaftaran
-            </button>
-            <span aria-hidden="true">·</span>
-            <button
-              type="button"
-              onClick={() => setStudentTab('STATUS')}
-              className="hover:text-[#0F5338] cursor-pointer"
-            >
-              Cek Status Seleksi
-            </button>
-            <span aria-hidden="true">·</span>
-            <a
-              href="/admin"
-              onClick={(e) => {
-                e.preventDefault();
-                navigateToAdminRoute('ADMIN');
-              }}
-              className="font-mono-tabular text-slate-400 hover:text-[#0F5338] transition-colors"
-              title="Buka halaman khusus /admin"
-            >
-              /admin
-            </a>
+        <div className="max-w-7xl mx-auto space-y-4">
+          {studentTab === 'STATUS' && (
+            <div className="pb-4 border-b border-slate-200/60 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs">
+              <span className="font-bold text-[#0F1E19]">
+                No Admin SIT ARAFAH:
+              </span>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono-tabular text-slate-600">
+                <span>
+                  TK:{' '}
+                  <a
+                    href="https://wa.me/6287887730314"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0F5338] font-semibold hover:underline"
+                  >
+                    0878-8773-0314
+                  </a>
+                </span>
+                <span>
+                  SD Gedung A:{' '}
+                  <a
+                    href="https://wa.me/6281549615571"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0F5338] font-semibold hover:underline"
+                  >
+                    0815-4961-5571
+                  </a>
+                </span>
+                <span>
+                  SD Gedung B:{' '}
+                  <a
+                    href="https://wa.me/6282122417335"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0F5338] font-semibold hover:underline"
+                  >
+                    0821-2241-7335
+                  </a>
+                </span>
+                <span>
+                  AIS:{' '}
+                  <a
+                    href="https://wa.me/6282258000330"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0F5338] font-semibold hover:underline"
+                  >
+                    0822-5800-0330
+                  </a>
+                </span>
+                <span>
+                  SMP:{' '}
+                  <a
+                    href="https://wa.me/6282113146800"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0F5338] font-semibold hover:underline"
+                  >
+                    0821-1314-6800
+                  </a>
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <strong className="text-[#0F1E19]">Panitia SPMB SIT ARAFAH</strong> · Sistem Penerimaan
+              Murid Baru Terpadu (AIS, TK, SD, SMP)
+            </div>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setStudentTab('FORM')}
+                className="hover:text-[#0F5338] cursor-pointer"
+              >
+                Formulir Pendaftaran
+              </button>
+              <span aria-hidden="true">·</span>
+              <button
+                type="button"
+                onClick={() => setStudentTab('STATUS')}
+                className="hover:text-[#0F5338] cursor-pointer"
+              >
+                Cek Status Seleksi
+              </button>
+              <span aria-hidden="true">·</span>
+              <a
+                href="/admin"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateToAdminRoute('ADMIN');
+                }}
+                className="font-mono-tabular text-slate-400 hover:text-[#0F5338] transition-colors"
+                title="Buka halaman khusus /admin"
+              >
+                /admin
+              </a>
+            </div>
           </div>
         </div>
       </footer>

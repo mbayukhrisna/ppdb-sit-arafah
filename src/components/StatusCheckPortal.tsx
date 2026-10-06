@@ -121,7 +121,7 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
               </h3>
               <p className="text-sm text-[#166534] mt-2 leading-relaxed">
                 {record.statusNotes ||
-                  'Selamat! Calon peserta didik dinyatakan DITERIMA pada SIT ARAFAH. Silakan melanjutkan proses daftar ulang sesuai jadwal panitia.'}
+                  'Pendaftaran telah diterima. Tahap selanjutnya, calon murid akan diinformasikan oleh Admin SPMB SIT Arafah untuk melaksanakan proses selanjutnya sesuai dengan jenjang yang didaftarkan.'}
               </p>
             </div>
           </div>
@@ -143,7 +143,7 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
               </h3>
               <p className="text-sm text-[#991B1B] mt-2 leading-relaxed">
                 {record.statusNotes ||
-                  'Terima kasih atas partisipasi Anda dalam seleksi SPMB SIT ARAFAH. Berdasarkan kuota dan hasil seleksi, ananda belum dapat diterima pada gelombang ini.'}
+                  'Pendaftaran belum dapat diterima. Setelah dilakukan proses verifikasi, pendaftaran calon murid belum memenuhi ketentuan yang ditetapkan oleh SPMB SIT Arafah. Silakan menghubungi Admin SPMB SIT Arafah untuk informasi lebih lanjut.'}
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
               </h3>
               <p className="text-sm text-[#1E40AF] mt-2 leading-relaxed">
                 {record.statusNotes ||
-                  'Berkas pendaftaran telah diverifikasi oleh Panitia Unit. Silakan mengikuti tahapan observasi sesuai jadwal.'}
+                  'Pendaftaran telah diverifikasi. Data dan dokumen calon murid telah diperiksa oleh Admin SPMB SIT Arafah. Silakan menunggu informasi selanjutnya mengenai proses penerimaan.'}
               </p>
             </div>
           </div>

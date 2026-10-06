@@ -494,7 +494,7 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
         unit,
         status: 'MENUNGGU_VERIFIKASI',
         statusNotes:
-          'Pendaftaran telah diterima sistem SPMB SIT ARAFAH dan sedang dalam antrean verifikasi panitia unit.',
+          'Pendaftaran sedang dalam proses verifikasi. Data dan dokumen calon murid sedang diperiksa oleh Admin SPMB SIT Arafah. Mohon menunggu informasi mengenai hasil verifikasi selanjutnya.',
         accountEmail: accountEmail.trim() || 'pendaftar@spmb-arafah.sch.id',
         accountPin: accountPin.trim() || '0000',
         nisn: nisn.trim(),

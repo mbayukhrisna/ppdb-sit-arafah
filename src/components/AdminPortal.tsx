@@ -35,6 +35,11 @@ import {
   exportRegistrationsToExcel,
   exportStaffReferralsToExcel,
 } from '../utils/exportToExcel';
+import {
+  STATUS_DEFAULT_NOTES,
+  getStatusLabel,
+  getEffectiveStatusNote,
+} from '../utils/statusUtils';
 
 interface AdminPortalProps {
   registrations: SPMBRegistrationRecord[];
@@ -152,21 +157,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const handleQuickStatusChange = async (
     record: SPMBRegistrationRecord,
     newStatus: SelectionStatus,
-    defaultNote: string
+    newNote: string
   ) => {
     setIsProcessing(true);
     try {
       await onUpdateRegistration({
         ...record,
         status: newStatus,
-        statusNotes: record.statusNotes || defaultNote,
+        statusNotes: newNote,
         updatedAtIso: new Date().toISOString(),
       });
       if (viewingApplicant && viewingApplicant.id === record.id) {
         setViewingApplicant({
           ...record,
           status: newStatus,
-          statusNotes: record.statusNotes || defaultNote,
+          statusNotes: newNote,
         });
       }
     } finally {
@@ -410,6 +415,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   const countTotal = unitRegistrations.length;
   const countWaiting = unitRegistrations.filter((r) => r.status === 'MENUNGGU_VERIFIKASI').length;
+  const countVerified = unitRegistrations.filter((r) => r.status === 'TERVERIFIKASI').length;
   const countAccepted = unitRegistrations.filter((r) => r.status === 'DITERIMA').length;
   const countRejected = unitRegistrations.filter((r) => r.status === 'TIDAK_DITERIMA').length;
 
@@ -441,6 +447,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* Tombol Export Excel Spreadsheet Utama */}
+            <button
+              type="button"
+              onClick={() =>
+                exportRegistrationsToExcel(
+                  unitRegistrations,
+                  unitFilter === 'ALL' ? 'Semua_Unit' : `Unit_${unitFilter}`
+                )
+              }
+              title="Unduh seluruh data pendaftar dalam format Excel Spreadsheet (.xlsx)"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0F5338] hover:bg-[#0B3E29] rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Export Excel ({unitRegistrations.length})</span>
+            </button>
+
             {/* Switch Filter Unit Cepat */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
               {(['ALL', 'AIS', 'TK', 'SD', 'SMP'] as const).map((u) => (
@@ -471,31 +493,37 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         </div>
 
         {/* Stat Strip (Tabular Numerals) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 pt-5">
           <div>
             <span className="text-xs text-slate-500 block">
-              Total Pendaftar {unitFilter === 'ALL' ? 'Semua Unit' : `Unit ${unitFilter}`}
+              Total {unitFilter === 'ALL' ? 'Semua' : `Unit ${unitFilter}`}
             </span>
             <span className="text-2xl font-bold font-mono-tabular text-[#0F1E19] mt-0.5 block">
               {countTotal}
             </span>
           </div>
           <div>
-            <span className="text-xs text-slate-500 block">Menunggu Verifikasi</span>
+            <span className="text-xs text-slate-500 block">1. Menunggu verifikasi</span>
             <span className="text-2xl font-bold font-mono-tabular text-[#D97706] mt-0.5 block">
               {countWaiting}
             </span>
           </div>
           <div>
-            <span className="text-xs text-slate-500 block">Diterima (Lulus Seleksi)</span>
-            <span className="text-2xl font-bold font-mono-tabular text-[#16A34A] mt-0.5 block">
-              {countAccepted}
+            <span className="text-xs text-slate-500 block">2. Sudah Diverifikasi</span>
+            <span className="text-2xl font-bold font-mono-tabular text-[#2563EB] mt-0.5 block">
+              {countVerified}
             </span>
           </div>
           <div>
-            <span className="text-xs text-slate-500 block">Tidak Diterima</span>
+            <span className="text-xs text-slate-500 block">3. Ditolak</span>
             <span className="text-2xl font-bold font-mono-tabular text-[#DC2626] mt-0.5 block">
               {countRejected}
+            </span>
+          </div>
+          <div>
+            <span className="text-xs text-slate-500 block">4. Diterima</span>
+            <span className="text-2xl font-bold font-mono-tabular text-[#16A34A] mt-0.5 block">
+              {countAccepted}
             </span>
           </div>
         </div>
@@ -567,10 +595,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 {(
                   [
                     { id: 'ALL', label: 'Semua Status' },
-                    { id: 'MENUNGGU_VERIFIKASI', label: 'Menunggu' },
-                    { id: 'TERVERIFIKASI', label: 'Terverifikasi' },
-                    { id: 'DITERIMA', label: 'Diterima' },
-                    { id: 'TIDAK_DITERIMA', label: 'Tidak Diterima' },
+                    { id: 'MENUNGGU_VERIFIKASI', label: '1. Menunggu verifikasi' },
+                    { id: 'TERVERIFIKASI', label: '2. Sudah Diverifikasi' },
+                    { id: 'TIDAK_DITERIMA', label: '3. Ditolak' },
+                    { id: 'DITERIMA', label: '4. Diterima' },
                   ] as const
                 ).map((st) => (
                   <button
@@ -694,28 +722,28 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           )}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        {row.status === 'DITERIMA' && (
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#16A34A]">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Diterima
-                          </span>
-                        )}
-                        {row.status === 'TIDAK_DITERIMA' && (
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#DC2626]">
-                            <XCircle className="w-3.5 h-3.5" />
-                            Tidak Diterima
+                        {row.status === 'MENUNGGU_VERIFIKASI' && (
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#D97706]">
+                            <Clock className="w-3.5 h-3.5" />
+                            Menunggu verifikasi
                           </span>
                         )}
                         {row.status === 'TERVERIFIKASI' && (
                           <span className="inline-flex items-center gap-1.5 font-semibold text-[#2563EB]">
                             <Clock className="w-3.5 h-3.5" />
-                            Terverifikasi
+                            Sudah Diverifikasi
                           </span>
                         )}
-                        {row.status === 'MENUNGGU_VERIFIKASI' && (
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#D97706]">
-                            <Clock className="w-3.5 h-3.5" />
-                            Menunggu Verifikasi
+                        {row.status === 'TIDAK_DITERIMA' && (
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#DC2626]">
+                            <XCircle className="w-3.5 h-3.5" />
+                            Ditolak
+                          </span>
+                        )}
+                        {row.status === 'DITERIMA' && (
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#16A34A]">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Diterima
                           </span>
                         )}
                       </td>
@@ -1093,10 +1121,26 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
             {/* Panel Keputusan Kelulusan Cepat */}
             <div className="bg-[#F3F7F5] border border-[#C6DDD3] rounded-lg p-4 mb-6">
-              <p className="text-xs font-bold text-[#0F1E19] mb-2">
-                Keputusan Seleksi Panitia Unit {loggedInAdmin.unit} (Langsung tampil saat Orang Tua
-                cek Nomor Pendaftaran):
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                <p className="text-xs font-bold text-[#0F1E19]">
+                  Keputusan Seleksi Calon Murid (Langsung tampil saat Orang Tua cek Nomor Pendaftaran):
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    exportRegistrationsToExcel(
+                      [viewingApplicant],
+                      `Peserta_${viewingApplicant.registrationNumber}`
+                    )
+                  }
+                  title="Unduh data calon peserta didik ini dalam format Excel Spreadsheet (.xlsx)"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#0F5338] bg-white border border-[#0F5338] rounded-md hover:bg-[#EBF3EF] transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-[#0F5338]" />
+                  <span>Export Excel Siswa Ini</span>
+                </button>
+              </div>
+
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -1104,18 +1148,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   onClick={() =>
                     handleQuickStatusChange(
                       viewingApplicant,
-                      'DITERIMA',
-                      `Selamat! Ananda ${viewingApplicant.fullName} dinyatakan DITERIMA di Unit ${viewingApplicant.unit} SIT ARAFAH.`
+                      'MENUNGGU_VERIFIKASI',
+                      STATUS_DEFAULT_NOTES.MENUNGGU_VERIFIKASI
                     )
                   }
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                    viewingApplicant.status === 'DITERIMA'
-                      ? 'bg-[#16A34A] text-white'
-                      : 'bg-white text-[#16A34A] border border-[#16A34A]'
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                    viewingApplicant.status === 'MENUNGGU_VERIFIKASI'
+                      ? 'bg-[#D97706] text-white'
+                      : 'bg-white text-[#D97706] border border-[#D97706]'
                   }`}
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Terima Calon Siswa
+                  <Clock className="w-3.5 h-3.5" />
+                  1. Menunggu verifikasi
                 </button>
 
                 <button
@@ -1125,17 +1169,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     handleQuickStatusChange(
                       viewingApplicant,
                       'TERVERIFIKASI',
-                      `Berkas pendaftaran Ananda ${viewingApplicant.fullName} telah TERVERIFIKASI oleh Panitia Unit ${viewingApplicant.unit}.`
+                      STATUS_DEFAULT_NOTES.TERVERIFIKASI
                     )
                   }
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
                     viewingApplicant.status === 'TERVERIFIKASI'
                       ? 'bg-[#2563EB] text-white'
                       : 'bg-white text-[#2563EB] border border-[#2563EB]'
                   }`}
                 >
                   <Clock className="w-3.5 h-3.5" />
-                  Tandai Terverifikasi
+                  2. Sudah Diverifikasi
                 </button>
 
                 <button
@@ -1145,17 +1189,37 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     handleQuickStatusChange(
                       viewingApplicant,
                       'TIDAK_DITERIMA',
-                      `Mohon maaf, berdasarkan hasil seleksi dan kuota Unit ${viewingApplicant.unit}, Ananda belum dapat diterima pada periode ini.`
+                      STATUS_DEFAULT_NOTES.TIDAK_DITERIMA
                     )
                   }
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
                     viewingApplicant.status === 'TIDAK_DITERIMA'
                       ? 'bg-[#DC2626] text-white'
                       : 'bg-white text-[#DC2626] border border-[#DC2626]'
                   }`}
                 >
                   <XCircle className="w-3.5 h-3.5" />
-                  Tidak Diterima
+                  3. Ditolak
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isProcessing}
+                  onClick={() =>
+                    handleQuickStatusChange(
+                      viewingApplicant,
+                      'DITERIMA',
+                      STATUS_DEFAULT_NOTES.DITERIMA
+                    )
+                  }
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                    viewingApplicant.status === 'DITERIMA'
+                      ? 'bg-[#16A34A] text-white'
+                      : 'bg-white text-[#16A34A] border border-[#16A34A]'
+                  }`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  4. Diterima
                 </button>
               </div>
             </div>
@@ -1335,18 +1399,20 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </label>
                   <select
                     value={editingApplicant.status}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const nextStatus = e.target.value as SelectionStatus;
                       setEditingApplicant({
                         ...editingApplicant,
-                        status: e.target.value as SelectionStatus,
-                      })
-                    }
+                        status: nextStatus,
+                        statusNotes: STATUS_DEFAULT_NOTES[nextStatus] || editingApplicant.statusNotes,
+                      });
+                    }}
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md font-semibold"
                   >
-                    <option value="MENUNGGU_VERIFIKASI">MENUNGGU VERIFIKASI</option>
-                    <option value="TERVERIFIKASI">TERVERIFIKASI (JADWAL TES)</option>
-                    <option value="DITERIMA">DITERIMA (LULUS SELEKSI)</option>
-                    <option value="TIDAK_DITERIMA">TIDAK DITERIMA</option>
+                    <option value="MENUNGGU_VERIFIKASI">1. Menunggu verifikasi</option>
+                    <option value="TERVERIFIKASI">2. Sudah Diverifikasi</option>
+                    <option value="TIDAK_DITERIMA">3. Ditolak</option>
+                    <option value="DITERIMA">4. Diterima</option>
                   </select>
                 </div>
 

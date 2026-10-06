@@ -1,24 +1,9 @@
 import * as XLSX from 'xlsx';
 import {
   SPMBRegistrationRecord,
-  SelectionStatus,
   StaffReferenceRecord,
 } from '../types/spmb';
-
-function formatSelectionStatus(status: SelectionStatus): string {
-  switch (status) {
-    case 'MENUNGGU_VERIFIKASI':
-      return 'Menunggu Verifikasi';
-    case 'TERVERIFIKASI':
-      return 'Terverifikasi';
-    case 'DITERIMA':
-      return 'Diterima (Lulus Seleksi)';
-    case 'TIDAK_DITERIMA':
-      return 'Tidak Diterima';
-    default:
-      return status;
-  }
-}
+import { getStatusLabel, getEffectiveStatusNote } from './statusUtils';
 
 function formatDateIndo(isoString?: string): string {
   if (!isoString) return '-';
@@ -54,7 +39,6 @@ export function exportRegistrationsToExcel(
   scopeLabel = 'Semua_Unit'
 ) {
   if (!records || records.length === 0) {
-    alert('Tidak ada data peserta untuk diexport.');
     return;
   }
 
@@ -63,8 +47,8 @@ export function exportRegistrationsToExcel(
       'No.': index + 1,
       'No. Pendaftaran': record.registrationNumber || '-',
       'Unit Peminatan': record.unit || '-',
-      'Status Seleksi': formatSelectionStatus(record.status),
-      'Catatan Status': record.statusNotes || '-',
+      'Status Seleksi': getStatusLabel(record.status),
+      'Catatan Status': getEffectiveStatusNote(record.status, record.statusNotes),
       'Nama Lengkap Siswa': record.fullName || '-',
       'Nama Panggilan': record.nickname || '-',
       NISN: record.nisn || '-',
@@ -187,7 +171,6 @@ export function exportStaffReferralsToExcel(
   registrations: SPMBRegistrationRecord[]
 ) {
   if (!staffList || staffList.length === 0) {
-    alert('Tidak ada data referensi untuk diexport.');
     return;
   }
 

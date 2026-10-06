@@ -13,6 +13,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { SPMBRegistrationRecord } from '../types/spmb';
+import { getEffectiveStatusNote } from '../utils/statusUtils';
 
 interface StatusCheckPortalProps {
   registrations: SPMBRegistrationRecord[];
@@ -107,6 +108,8 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
   };
 
   const renderStatusBanner = (record: SPMBRegistrationRecord) => {
+    const effectiveNote = getEffectiveStatusNote(record.status, record.statusNotes);
+
     if (record.status === 'DITERIMA') {
       return (
         <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl p-6 mb-6">
@@ -114,14 +117,13 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
             <CheckCircle2 className="w-8 h-8 text-[#16A34A] shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold text-[#15803D] tracking-wide">
-                PENGUMUMAN KELULUSAN SELEKSI · UNIT {record.unit}
+                STATUS PENDAFTARAN · UNIT {record.unit}
               </p>
               <h3 className="text-xl font-bold text-[#14532D] mt-1">
-                DITERIMA SEBAGAI CALON PESERTA DIDIK BARU SIT ARAFAH
+                Diterima
               </h3>
               <p className="text-sm text-[#166534] mt-2 leading-relaxed">
-                {record.statusNotes ||
-                  'Pendaftaran telah diterima. Tahap selanjutnya, calon murid akan diinformasikan oleh Admin SPMB SIT Arafah untuk melaksanakan proses selanjutnya sesuai dengan jenjang yang didaftarkan.'}
+                {effectiveNote}
               </p>
             </div>
           </div>
@@ -136,14 +138,13 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
             <XCircle className="w-8 h-8 text-[#DC2626] shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold text-[#B91C1C] tracking-wide">
-                HASIL SELEKSI · UNIT {record.unit}
+                STATUS PENDAFTARAN · UNIT {record.unit}
               </p>
               <h3 className="text-xl font-bold text-[#7F1D1D] mt-1">
-                BELUM DAPAT DITERIMA PADA PERIODE INI
+                Ditolak
               </h3>
               <p className="text-sm text-[#991B1B] mt-2 leading-relaxed">
-                {record.statusNotes ||
-                  'Pendaftaran belum dapat diterima. Setelah dilakukan proses verifikasi, pendaftaran calon murid belum memenuhi ketentuan yang ditetapkan oleh SPMB SIT Arafah. Silakan menghubungi Admin SPMB SIT Arafah untuk informasi lebih lanjut.'}
+                {effectiveNote}
               </p>
             </div>
           </div>
@@ -158,14 +159,13 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
             <FileCheck className="w-8 h-8 text-[#2563EB] shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold text-[#1D4ED8] tracking-wide">
-                STATUS SELEKSI · UNIT {record.unit}
+                STATUS PENDAFTARAN · UNIT {record.unit}
               </p>
               <h3 className="text-xl font-bold text-[#1E3A8A] mt-1">
-                BERKAS TERVERIFIKASI — TAHAP OBSERVASI / TES SELEKSI
+                Sudah Diverifikasi
               </h3>
               <p className="text-sm text-[#1E40AF] mt-2 leading-relaxed">
-                {record.statusNotes ||
-                  'Pendaftaran telah diverifikasi. Data dan dokumen calon murid telah diperiksa oleh Admin SPMB SIT Arafah. Silakan menunggu informasi selanjutnya mengenai proses penerimaan.'}
+                {effectiveNote}
               </p>
             </div>
           </div>
@@ -182,11 +182,10 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
               STATUS PENDAFTARAN · UNIT {record.unit}
             </p>
             <h3 className="text-xl font-bold text-[#78350F] mt-1">
-              MENUNGGU VERIFIKASI PANITIA JENJANG {record.unit}
+              Menunggu verifikasi
             </h3>
             <p className="text-sm text-[#92400E] mt-2 leading-relaxed">
-              {record.statusNotes ||
-                'Data pendaftaran Anda telah masuk ke dalam sistem dan sedang diverifikasi oleh Admin Unit.'}
+              {effectiveNote}
             </p>
           </div>
         </div>

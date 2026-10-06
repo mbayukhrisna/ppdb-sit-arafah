@@ -590,17 +590,20 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-600 mt-3">
               <span>Unit Peminatan: {submittedRecord.unit}</span>
               <span aria-hidden="true">·</span>
-              <span>Status Awal: Menunggu Verifikasi Panitia</span>
+              <span>Status Pendaftaran: Menunggu verifikasi</span>
             </div>
           </div>
 
           {/* Notifikasi Pengumuman */}
           <div className="border-l-4 border-[#0F5338] bg-slate-50 p-4 rounded-r-lg mb-8 text-sm text-slate-700 leading-relaxed">
             <p className="font-semibold text-[#0F1E19]">
-              Notifikasi Nomor Pendaftaran & Cara Cek Kelulusan:
+              Status: Menunggu verifikasi
             </p>
             <p className="mt-1">
-              Informasi selanjutnya akan disampaikan melalui nomor WhatsApp (
+              Pendaftaran sedang dalam proses verifikasi. Data dan dokumen calon murid sedang diperiksa oleh Admin SPMB SIT Arafah. Mohon menunggu informasi mengenai hasil verifikasi selanjutnya.
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              Informasi selanjutnya juga akan disampaikan melalui nomor WhatsApp (
               <span className="font-mono-tabular font-medium">{submittedRecord.whatsapp}</span>) yang
               telah didaftarkan. Orang tua dapat mengecek status kelulusan sewaktu-waktu pada menu{' '}
               <strong>Cek Status Seleksi</strong> menggunakan Nomor Pendaftaran di atas.

@@ -69,18 +69,13 @@ export function exportRegistrationsToExcel(
       'Kota Sekolah Asal': record.originSchoolCity || '-',
       'Provinsi Sekolah Asal': record.originSchoolProvince || '-',
       'Tahun Kelulusan': record.graduationYear || '-',
-      'Nama Ayah': record.fatherName || '-',
-      'NIK Ayah': record.fatherNik ? `'${record.fatherNik}` : '-',
-      'No. WA Ayah': record.fatherWhatsapp || '-',
-      'Pendidikan Ayah': record.fatherEducation || '-',
-      'Pekerjaan Ayah': record.fatherOccupation || '-',
-      'Instansi / Tempat Kerja Ayah': record.fatherInstitution || '-',
-      'Nama Ibu': record.motherName || '-',
-      'NIK Ibu': record.motherNik ? `'${record.motherNik}` : '-',
-      'No. WA Ibu': record.motherWhatsapp || '-',
-      'Pendidikan Ibu': record.motherEducation || '-',
-      'Pekerjaan Ibu': record.motherOccupation || '-',
-      'Instansi / Tempat Kerja Ibu': record.motherInstitution || '-',
+      'Nama Ayah/Bunda/Wali':
+        record.parentGuardianName || record.fatherName || record.motherName || '-',
+      'No. WA Ayah/Bunda/Wali':
+        record.parentGuardianWhatsapp ||
+        record.fatherWhatsapp ||
+        record.motherWhatsapp ||
+        '-',
       'Sumber Referensi': record.referenceSource || '-',
       'Detail Pemberi Referensi': record.referenceDetailPrimary || '-',
       'Kode Link Referensi': record.referenceDetailSecondary || '-',
@@ -123,18 +118,8 @@ export function exportRegistrationsToExcel(
     { wch: 20 }, // Kota Sekolah Asal
     { wch: 20 }, // Provinsi Sekolah Asal
     { wch: 16 }, // Tahun Lulus
-    { wch: 26 }, // Nama Ayah
-    { wch: 20 }, // NIK Ayah
-    { wch: 18 }, // No WA Ayah
-    { wch: 14 }, // Pend Ayah
-    { wch: 22 }, // Pekerjaan Ayah
-    { wch: 26 }, // Instansi Ayah
-    { wch: 26 }, // Nama Ibu
-    { wch: 20 }, // NIK Ibu
-    { wch: 18 }, // No WA Ibu
-    { wch: 14 }, // Pend Ibu
-    { wch: 22 }, // Pekerjaan Ibu
-    { wch: 26 }, // Instansi Ibu
+    { wch: 30 }, // Nama Ayah/Bunda/Wali
+    { wch: 22 }, // No WA Ayah/Bunda/Wali
     { wch: 22 }, // Sumber Referensi
     { wch: 30 }, // Detail Pemberi Referensi
     { wch: 20 }, // Kode Link Referensi

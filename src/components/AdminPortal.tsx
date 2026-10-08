@@ -756,14 +756,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="font-medium text-slate-800">
-                          {row.fatherName && row.motherName
-                            ? `Ayah: ${row.fatherName}`
-                            : row.fatherName
-                              ? `Ayah: ${row.fatherName}`
-                              : `Ibu: ${row.motherName}`}
+                          {row.parentGuardianName ||
+                            row.fatherName ||
+                            row.motherName ||
+                            '-'}
                         </div>
                         <div className="text-slate-500 font-mono-tabular mt-0.5">
-                          WA: {row.whatsapp}
+                          WA: {row.parentGuardianWhatsapp || row.fatherWhatsapp || row.motherWhatsapp || row.whatsapp}
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
@@ -1383,19 +1382,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </strong>
                 </p>
                 <p>
-                  <span className="text-slate-500">Data Ayah:</span>{' '}
+                  <span className="text-slate-500">Data Ayah / Bunda / Wali:</span>{' '}
                   <strong>
-                    {viewingApplicant.fatherName
-                      ? `${viewingApplicant.fatherName} | NIK: ${viewingApplicant.fatherNik} | Pend: ${viewingApplicant.fatherEducation} | ${viewingApplicant.fatherOccupation} (${viewingApplicant.fatherInstitution})`
-                      : '— (Tidak diisi)'}
-                  </strong>
-                </p>
-                <p>
-                  <span className="text-slate-500">Data Ibu:</span>{' '}
-                  <strong>
-                    {viewingApplicant.motherName
-                      ? `${viewingApplicant.motherName} | NIK: ${viewingApplicant.motherNik} | Pend: ${viewingApplicant.motherEducation} | ${viewingApplicant.motherOccupation} (${viewingApplicant.motherInstitution})`
-                      : '— (Tidak diisi)'}
+                    {viewingApplicant.parentGuardianName ||
+                      viewingApplicant.fatherName ||
+                      viewingApplicant.motherName ||
+                      '—'}
+                    {(viewingApplicant.parentGuardianWhatsapp ||
+                      viewingApplicant.fatherWhatsapp ||
+                      viewingApplicant.motherWhatsapp) && (
+                      <span className="font-mono-tabular font-medium text-slate-700 ml-1">
+                        · WA:{' '}
+                        {viewingApplicant.parentGuardianWhatsapp ||
+                          viewingApplicant.fatherWhatsapp ||
+                          viewingApplicant.motherWhatsapp}
+                      </span>
+                    )}
                   </strong>
                 </p>
                 <p>
@@ -1656,71 +1658,49 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
-                    Nama Ayah (Opsional jika Ibu diisi)
+                    Nama Lengkap Ayah / Bunda / Wali
                   </label>
                   <input
                     type="text"
-                    value={editingApplicant.fatherName}
+                    required
+                    value={
+                      editingApplicant.parentGuardianName ||
+                      editingApplicant.fatherName ||
+                      editingApplicant.motherName ||
+                      ''
+                    }
                     onChange={(e) =>
-                      setEditingApplicant({ ...editingApplicant, fatherName: e.target.value })
+                      setEditingApplicant({
+                        ...editingApplicant,
+                        parentGuardianName: e.target.value,
+                        fatherName: e.target.value,
+                      })
                     }
                     className="w-full px-3 py-2 border border-slate-300 rounded-md"
                   />
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
-                    Pendidikan Ayah
-                  </label>
-                  <select
-                    value={editingApplicant.fatherEducation}
-                    onChange={(e) =>
-                      setEditingApplicant({
-                        ...editingApplicant,
-                        fatherEducation: e.target.value as EducationLevel,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                  >
-                    <option value="">-- Pilih --</option>
-                    {EDUCATION_LEVELS.map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        {lvl}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Nama Ibu Kandung (Opsional jika Ayah diisi)
+                    Nomor WhatsApp Ayah / Bunda / Wali
                   </label>
                   <input
-                    type="text"
-                    value={editingApplicant.motherName}
-                    onChange={(e) =>
-                      setEditingApplicant({ ...editingApplicant, motherName: e.target.value })
+                    type="tel"
+                    required
+                    value={
+                      editingApplicant.parentGuardianWhatsapp ||
+                      editingApplicant.fatherWhatsapp ||
+                      editingApplicant.motherWhatsapp ||
+                      ''
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Pendidikan Ibu</label>
-                  <select
-                    value={editingApplicant.motherEducation}
                     onChange={(e) =>
                       setEditingApplicant({
                         ...editingApplicant,
-                        motherEducation: e.target.value as EducationLevel,
+                        parentGuardianWhatsapp: e.target.value,
+                        fatherWhatsapp: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                  >
-                    <option value="">-- Pilih --</option>
-                    {EDUCATION_LEVELS.map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        {lvl}
-                      </option>
-                    ))}
-                  </select>
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md font-mono-tabular"
+                  />
                 </div>
               </div>
 

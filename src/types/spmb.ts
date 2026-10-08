@@ -84,21 +84,24 @@ export interface SPMBRegistrationRecord {
   originSchoolProvince: string;
   graduationYear: string;
 
-  // DATA AYAH (Opsional apabila Data Ibu sudah diisi lengkap)
-  fatherName: string;
-  fatherNik: string;
-  fatherWhatsapp: string;
-  fatherEducation: EducationLevel;
-  fatherOccupation: string;
-  fatherInstitution: string;
+  // DATA AYAH / BUNDA / WALI
+  parentGuardianName?: string;
+  parentGuardianWhatsapp?: string;
 
-  // DATA IBU (Opsional apabila Data Ayah sudah diisi lengkap)
-  motherName: string;
-  motherNik: string;
-  motherWhatsapp: string;
-  motherEducation: EducationLevel;
-  motherOccupation: string;
-  motherInstitution: string;
+  // Legacy data compatibility
+  fatherName: string;
+  fatherNik?: string;
+  fatherWhatsapp: string;
+  fatherEducation?: EducationLevel | string;
+  fatherOccupation?: string;
+  fatherInstitution?: string;
+
+  motherName?: string;
+  motherNik?: string;
+  motherWhatsapp?: string;
+  motherEducation?: EducationLevel | string;
+  motherOccupation?: string;
+  motherInstitution?: string;
 
   // DATA REFERENSI
   referenceSource: ReferenceSource;

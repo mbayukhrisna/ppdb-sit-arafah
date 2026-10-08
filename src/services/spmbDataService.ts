@@ -53,29 +53,35 @@ export function packRegistrationForFirestore(
     .join(DELIM)
     .slice(0, 600);
 
-  const hasFather = record.fatherName.trim().length > 0;
+  const effectiveParentName = (record.parentGuardianName || record.fatherName || '').trim();
+  const effectiveParentWhatsapp = (
+    record.parentGuardianWhatsapp ||
+    record.fatherWhatsapp ||
+    ''
+  ).trim();
+  const hasFather = effectiveParentName.length > 0;
   const fatherProfilePacked = hasFather
     ? [
-        cleanPart(record.fatherName, 100),
-        cleanPart(record.fatherNik, 30),
-        cleanPart(record.fatherWhatsapp, 30),
-        cleanPart(record.fatherEducation, 20),
-        cleanPart(record.fatherOccupation, 80),
-        cleanPart(record.fatherInstitution, 100),
+        cleanPart(effectiveParentName, 100),
+        cleanPart(record.fatherNik || '', 30),
+        cleanPart(effectiveParentWhatsapp, 30),
+        cleanPart(record.fatherEducation || '', 20),
+        cleanPart(record.fatherOccupation || '', 80),
+        cleanPart(record.fatherInstitution || '', 100),
       ]
         .join(DELIM)
         .slice(0, 600)
     : '';
 
-  const hasMother = record.motherName.trim().length > 0;
+  const hasMother = (record.motherName || '').trim().length > 0;
   const motherProfilePacked = hasMother
     ? [
-        cleanPart(record.motherName, 100),
-        cleanPart(record.motherNik, 30),
-        cleanPart(record.motherWhatsapp, 30),
-        cleanPart(record.motherEducation, 20),
-        cleanPart(record.motherOccupation, 80),
-        cleanPart(record.motherInstitution, 100),
+        cleanPart(record.motherName || '', 100),
+        cleanPart(record.motherNik || '', 30),
+        cleanPart(record.motherWhatsapp || '', 30),
+        cleanPart(record.motherEducation || '', 20),
+        cleanPart(record.motherOccupation || '', 80),
+        cleanPart(record.motherInstitution || '', 100),
       ]
         .join(DELIM)
         .slice(0, 600)
@@ -162,6 +168,8 @@ export function unpackRegistrationFromFirestore(
     originSchoolCity: schoolParts[2] || '',
     originSchoolProvince: schoolParts[3] || '',
     graduationYear: schoolParts[4] || '2026',
+    parentGuardianName: fatherParts[0] || motherParts[0] || '',
+    parentGuardianWhatsapp: fatherParts[2] || motherParts[2] || '',
     fatherName: fatherParts[0] || '',
     fatherNik: fatherParts[1] || '',
     fatherWhatsapp: fatherParts[2] || '',
@@ -496,6 +504,8 @@ export const INITIAL_REGISTRATIONS: SPMBRegistrationRecord[] = [
     originSchoolCity: 'Kota Depok',
     originSchoolProvince: 'Jawa Barat',
     graduationYear: '2026',
+    parentGuardianName: 'Ir. Farhan Akbar, M.T.',
+    parentGuardianWhatsapp: '081288990011',
     fatherName: 'Ir. Farhan Akbar, M.T.',
     fatherNik: '3276011205880003',
     fatherWhatsapp: '081288990011',
@@ -547,6 +557,8 @@ export const INITIAL_REGISTRATIONS: SPMBRegistrationRecord[] = [
     originSchoolCity: 'Kota Depok',
     originSchoolProvince: 'Jawa Barat',
     graduationYear: '2026',
+    parentGuardianName: 'Hj. Raline Kusumawardhani, S.E.',
+    parentGuardianWhatsapp: '081377665544',
     // Contoh kasus hanya mengisi biodata Ibu saja (sesuai aturan logika salah satu ortu)
     fatherName: '',
     fatherNik: '',
@@ -599,6 +611,8 @@ export const INITIAL_REGISTRATIONS: SPMBRegistrationRecord[] = [
     originSchoolCity: 'Kota Depok',
     originSchoolProvince: 'Jawa Barat',
     graduationYear: '2026',
+    parentGuardianName: 'Hendrawan Pratama, S.T.',
+    parentGuardianWhatsapp: '085711223344',
     fatherName: 'Hendrawan Pratama, S.T.',
     fatherNik: '3201050311860002',
     fatherWhatsapp: '085711223344',
@@ -650,6 +664,8 @@ export const INITIAL_REGISTRATIONS: SPMBRegistrationRecord[] = [
     originSchoolCity: 'Kota Tangerang Selatan',
     originSchoolProvince: 'Banten',
     graduationYear: '2026',
+    parentGuardianName: 'H. Taufik Hidayatullah, M.M.',
+    parentGuardianWhatsapp: '081199887766',
     fatherName: 'H. Taufik Hidayatullah, M.M.',
     fatherNik: '3674032106820001',
     fatherWhatsapp: '081199887766',

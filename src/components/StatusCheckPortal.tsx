@@ -367,19 +367,22 @@ export const StatusCheckPortal: React.FC<StatusCheckPortalProps> = ({
                 </span>
               </div>
               <div>
-                <span className="text-xs text-slate-500 block">Biodata Ayah</span>
+                <span className="text-xs text-slate-500 block">Data Ayah / Bunda / Wali</span>
                 <span className="font-medium text-slate-900">
-                  {foundRecord.fatherName
-                    ? `${foundRecord.fatherName} · WA: ${foundRecord.fatherWhatsapp}`
-                    : '— (Diwakili oleh Biodata Ibu)'}
-                </span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 block">Biodata Ibu Kandung</span>
-                <span className="font-medium text-slate-900">
-                  {foundRecord.motherName
-                    ? `${foundRecord.motherName} · WA: ${foundRecord.motherWhatsapp}`
-                    : '— (Diwakili oleh Biodata Ayah)'}
+                  {foundRecord.parentGuardianName ||
+                    foundRecord.fatherName ||
+                    foundRecord.motherName ||
+                    '—'}
+                  {(foundRecord.parentGuardianWhatsapp ||
+                    foundRecord.fatherWhatsapp ||
+                    foundRecord.motherWhatsapp) && (
+                    <span className="font-mono-tabular text-slate-600 ml-1">
+                      · WA:{' '}
+                      {foundRecord.parentGuardianWhatsapp ||
+                        foundRecord.fatherWhatsapp ||
+                        foundRecord.motherWhatsapp}
+                    </span>
+                  )}
                 </span>
               </div>
               <div>

@@ -76,7 +76,6 @@ const HOW_DID_YOU_KNOW_OPTIONS: HowDidYouKnowOption[] = [
 ];
 
 type FormStage = 'FORM' | 'SUMMARY' | 'SUCCESS';
-type ParentFillMode = 'BOTH' | 'FATHER_ONLY' | 'MOTHER_ONLY';
 
 export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   activeStaffList,
@@ -85,7 +84,6 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   onNavigateToStatusCheck,
 }) => {
   const [stage, setStage] = useState<FormStage>('FORM');
-  const [parentMode, setParentMode] = useState<ParentFillMode>('BOTH');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -121,21 +119,9 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   // Unit choice
   const [unit, setUnit] = useState<EducationUnit>('SD');
 
-  // Father fields
-  const [fatherName, setFatherName] = useState('');
-  const [fatherNik, setFatherNik] = useState('');
-  const [fatherWhatsapp, setFatherWhatsapp] = useState('');
-  const [fatherEducation, setFatherEducation] = useState<EducationLevel>('S1');
-  const [fatherOccupation, setFatherOccupation] = useState('');
-  const [fatherInstitution, setFatherInstitution] = useState('');
-
-  // Mother fields
-  const [motherName, setMotherName] = useState('');
-  const [motherNik, setMotherNik] = useState('');
-  const [motherWhatsapp, setMotherWhatsapp] = useState('');
-  const [motherEducation, setMotherEducation] = useState<EducationLevel>('S1');
-  const [motherOccupation, setMotherOccupation] = useState('');
-  const [motherInstitution, setMotherInstitution] = useState('');
+  // Data Ayah / Bunda / Wali (Hanya 1 Form Sederhana)
+  const [parentGuardianName, setParentGuardianName] = useState('');
+  const [parentGuardianWhatsapp, setParentGuardianWhatsapp] = useState('');
 
   // Reference fields
   const [referenceSource, setReferenceSource] = useState<ReferenceSource>('Guru dan Staff');
@@ -315,18 +301,8 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
         ? matchedReferralStaff.roleUnit
         : 'SD'
     );
-    setParentMode('MOTHER_ONLY');
-    setFatherName('');
-    setFatherNik('');
-    setFatherWhatsapp('');
-    setFatherOccupation('');
-    setFatherInstitution('');
-    setMotherName('Hj. Annisa Rahmawati, S.Psi.');
-    setMotherNik('3276015405910002');
-    setMotherWhatsapp('081290008877');
-    setMotherEducation('S1');
-    setMotherOccupation('Psikolog Pendidikan');
-    setMotherInstitution('Klinik Tumbuh Kembang Amanah');
+    setParentGuardianName('Hj. Annisa Rahmawati, S.Psi.');
+    setParentGuardianWhatsapp('081290008877');
     const isParentRef = matchedReferralStaff?.category === 'Orang Tua Siswa';
     setReferenceSource(isParentRef ? 'Orang Tua/Wali Murid' : 'Guru dan Staff');
     setReferenceDetailPrimary(
@@ -430,27 +406,13 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       return;
     }
 
-    // Validasi Logika Orang Tua: Cukup salah satu saja (Ayah ATAU Ibu) yang diisi lengkap
-    const isFatherComplete =
-      fatherName.trim().length > 0 &&
-      fatherNik.trim().length > 0 &&
-      fatherWhatsapp.trim().length > 0 &&
-      fatherEducation !== '' &&
-      fatherOccupation.trim().length > 0 &&
-      fatherInstitution.trim().length > 0;
-
-    const isMotherComplete =
-      motherName.trim().length > 0 &&
-      motherNik.trim().length > 0 &&
-      motherWhatsapp.trim().length > 0 &&
-      motherEducation !== '' &&
-      motherOccupation.trim().length > 0 &&
-      motherInstitution.trim().length > 0;
-
-    if (!isFatherComplete && !isMotherComplete) {
-      setErrorMessage(
-        'Data Orang Tua wajib diisi minimal SALAH SATU secara lengkap (Data Ayah saja, Data Ibu saja, atau keduanya).'
-      );
+    // Validasi Data Ayah / Bunda / Wali (1 Form Sederhana)
+    if (!parentGuardianName.trim()) {
+      setErrorMessage('Mohon lengkapi Nama Lengkap Ayah/Bunda/Wali.');
+      return;
+    }
+    if (!parentGuardianWhatsapp.trim()) {
+      setErrorMessage('Mohon lengkapi Nomor WhatsApp Ayah/Bunda/Wali yang aktif.');
       return;
     }
 
@@ -473,9 +435,6 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       const regNum = `SPMB-${randomDigits}`;
       const nowIso = new Date().toISOString();
 
-      const cleanFather = parentMode === 'MOTHER_ONLY' ? '' : fatherName.trim();
-      const cleanMother = parentMode === 'FATHER_ONLY' ? '' : motherName.trim();
-
       const isParentRef = matchedReferralStaff?.category === 'Orang Tua Siswa';
       const effectiveReferenceSource: ReferenceSource = matchedReferralStaff
         ? isParentRef
@@ -486,6 +445,9 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
       const effectivePrimaryDetail = matchedReferralStaff
         ? matchedReferralStaff.name
         : '- (Pendaftaran Langsung Tanpa Referral)';
+
+      const cleanParentName = parentGuardianName.trim();
+      const cleanParentWa = parentGuardianWhatsapp.trim();
 
       const newRecord: SPMBRegistrationRecord = {
         id: `reg-${Date.now()}`,
@@ -517,18 +479,10 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
         originSchoolCity: originSchoolCity.trim(),
         originSchoolProvince: originSchoolProvince.trim(),
         graduationYear: graduationYear.trim(),
-        fatherName: cleanFather,
-        fatherNik: cleanFather ? fatherNik.trim() : '',
-        fatherWhatsapp: cleanFather ? fatherWhatsapp.trim() : '',
-        fatherEducation: cleanFather ? fatherEducation : '',
-        fatherOccupation: cleanFather ? fatherOccupation.trim() : '',
-        fatherInstitution: cleanFather ? fatherInstitution.trim() : '',
-        motherName: cleanMother,
-        motherNik: cleanMother ? motherNik.trim() : '',
-        motherWhatsapp: cleanMother ? motherWhatsapp.trim() : '',
-        motherEducation: cleanMother ? motherEducation : '',
-        motherOccupation: cleanMother ? motherOccupation.trim() : '',
-        motherInstitution: cleanMother ? motherInstitution.trim() : '',
+        parentGuardianName: cleanParentName,
+        parentGuardianWhatsapp: cleanParentWa,
+        fatherName: cleanParentName,
+        fatherWhatsapp: cleanParentWa,
         referenceSource: effectiveReferenceSource,
         referenceDetailPrimary: effectivePrimaryDetail,
         referenceDetailSecondary: matchedReferralStaff ? `?ref=${matchedReferralStaff.refCode}` : '',
@@ -637,13 +591,23 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
                 </span>
               </div>
               <div>
-                <span className="text-xs text-slate-500 block">Data Orang Tua / Wali</span>
+                <span className="text-xs text-slate-500 block">Data Ayah / Bunda / Wali</span>
                 <span className="font-medium text-slate-900">
-                  {submittedRecord.fatherName && submittedRecord.motherName
-                    ? `Ayah: ${submittedRecord.fatherName} · Ibu: ${submittedRecord.motherName}`
-                    : submittedRecord.fatherName
-                      ? `Ayah: ${submittedRecord.fatherName}`
-                      : `Ibu: ${submittedRecord.motherName}`}
+                  {submittedRecord.parentGuardianName ||
+                    submittedRecord.fatherName ||
+                    submittedRecord.motherName ||
+                    '-'}
+                  {(submittedRecord.parentGuardianWhatsapp ||
+                    submittedRecord.fatherWhatsapp ||
+                    submittedRecord.motherWhatsapp) && (
+                    <span className="font-mono-tabular text-slate-600 ml-1">
+                      (WA:{' '}
+                      {submittedRecord.parentGuardianWhatsapp ||
+                        submittedRecord.fatherWhatsapp ||
+                        submittedRecord.motherWhatsapp}
+                      )
+                    </span>
+                  )}
                 </span>
               </div>
               <div>
@@ -725,12 +689,7 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
   // ============================================================================
   if (stage === 'SUMMARY') {
     const fullAddressPreview = `${addressStreet}, RT ${rt}/RW ${rw}, Kel. ${village}, Kec. ${district}, ${city}, ${province} ${postalCode}`;
-    const activeParentPhone =
-      parentMode === 'FATHER_ONLY'
-        ? fatherWhatsapp
-        : parentMode === 'MOTHER_ONLY'
-          ? motherWhatsapp
-          : fatherWhatsapp || motherWhatsapp;
+    const activeParentPhone = parentGuardianWhatsapp.trim();
 
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6">
@@ -853,28 +812,20 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
 
             {/* 4. Data Orang Tua */}
             <section className="pt-6">
-              <h3 className="text-sm font-semibold text-[#0F5338] mb-3">04. Data Orang Tua</h3>
-              <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <h3 className="text-sm font-semibold text-[#0F5338] mb-3">
+                04. Data Ayah / Bunda / Wali
+              </h3>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <dt className="text-xs text-slate-500">Nama Ayah</dt>
+                  <dt className="text-xs text-slate-500">Nama Lengkap Ayah / Bunda / Wali</dt>
                   <dd className="font-medium text-slate-900 mt-0.5">
-                    {parentMode !== 'MOTHER_ONLY' && fatherName.trim()
-                      ? `${fatherName} (${fatherOccupation})`
-                      : '— (Tidak diisi / Diwakili Ibu)'}
+                    {parentGuardianName.trim() || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Nama Ibu Kandung</dt>
-                  <dd className="font-medium text-slate-900 mt-0.5">
-                    {parentMode !== 'FATHER_ONLY' && motherName.trim()
-                      ? `${motherName} (${motherOccupation})`
-                      : '— (Tidak diisi / Diwakili Ayah)'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500">Nomor WhatsApp Orang Tua</dt>
+                  <dt className="text-xs text-slate-500">Nomor WhatsApp Ayah / Bunda / Wali</dt>
                   <dd className="font-mono-tabular font-medium text-slate-900 mt-0.5">
-                    {activeParentPhone}
+                    {parentGuardianWhatsapp.trim() || '—'}
                   </dd>
                 </div>
               </dl>
@@ -1473,262 +1424,58 @@ export const RegistrationFormPortal: React.FC<RegistrationFormPortalProps> = ({
           </div>
         </section>
 
-        {/* BAGIAN 4: DATA ORANG TUA (DATA AYAH / DATA IBU — FLEKSIBEL SALAH SATU) */}
+        {/* BAGIAN 4: DATA AYAH / BUNDA / WALI (1 FORM SEDERHANA) */}
         <section className="bg-white border border-[#E2E8E5] rounded-xl p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E8E5] pb-4 mb-6">
-            <div>
-              <h2 className="text-lg font-bold text-[#0F1E19]">
-                04. Data Orang Tua (Ayah &amp; Ibu)
-              </h2>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Sesuai ketentuan SPMB SIT ARAFAH, orang tua{' '}
-                <strong className="text-[#0F5338]">
-                  cukup mengisi salah satu saja (Data Ayah saja atau Data Ibu saja)
-                </strong>{' '}
-                maupun keduanya.
-              </p>
-            </div>
-
-            {/* Interactive Mode Filter */}
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg self-start">
-              <button
-                type="button"
-                onClick={() => setParentMode('BOTH')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                  parentMode === 'BOTH'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Ayah &amp; Ibu
-              </button>
-              <button
-                type="button"
-                onClick={() => setParentMode('FATHER_ONLY')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                  parentMode === 'FATHER_ONLY'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Hanya Ayah
-              </button>
-              <button
-                type="button"
-                onClick={() => setParentMode('MOTHER_ONLY')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                  parentMode === 'MOTHER_ONLY'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Hanya Ibu
-              </button>
-            </div>
+          <div className="border-b border-[#E2E8E5] pb-4 mb-6">
+            <h2 className="text-lg font-bold text-[#0F1E19]">
+              04. Data Ayah / Bunda / Wali
+            </h2>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Masukkan identitas orang tua atau wali murid calon peserta didik baru untuk keperluan komunikasi panitia SPMB SIT ARAFAH.
+            </p>
           </div>
 
-          <div className="space-y-8">
-            {/* Sub-bagian DATA AYAH */}
-            {parentMode !== 'MOTHER_ONLY' && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <UserCheck className="w-4 h-4 text-[#0F5338]" />
+              <h3 className="text-sm font-bold text-[#0F1E19]">DATA AYAH / BUNDA / WALI</h3>
+              <span className="text-xs text-emerald-700 font-medium">
+                · Wajib dilengkapi
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <UserCheck className="w-4 h-4 text-[#0F5338]" />
-                  <h3 className="text-sm font-bold text-[#0F1E19]">DATA AYAH</h3>
-                  <span className="text-xs text-slate-500">
-                    ·{' '}
-                    {parentMode === 'FATHER_ONLY'
-                      ? 'Wajib dilengkapi'
-                      : 'Opsional apabila Data Ibu sudah diisi lengkap'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Nama Lengkap Ayah
-                    </label>
-                    <input
-                      type="text"
-                      value={fatherName}
-                      onChange={(e) => setFatherName(e.target.value)}
-                      placeholder="Nama lengkap Ayah sesuai KTP/KK"
-                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      NIK Ayah
-                    </label>
-                    <input
-                      type="text"
-                      value={fatherNik}
-                      onChange={(e) => setFatherNik(e.target.value)}
-                      placeholder="16 digit NIK Ayah"
-                      className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Nomor WhatsApp Ayah
-                    </label>
-                    <input
-                      type="tel"
-                      value={fatherWhatsapp}
-                      onChange={(e) => setFatherWhatsapp(e.target.value)}
-                      placeholder="0812xxxxxxxx"
-                      className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Pendidikan Terakhir Ayah
-                    </label>
-                    <select
-                      value={fatherEducation}
-                      onChange={(e) => setFatherEducation(e.target.value as EducationLevel)}
-                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    >
-                      <option value="">-- Pilih Pendidikan --</option>
-                      {EDUCATION_OPTIONS.map((edu) => (
-                        <option key={edu} value={edu}>
-                          {edu}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Pekerjaan Ayah
-                    </label>
-                    <input
-                      type="text"
-                      value={fatherOccupation}
-                      onChange={(e) => setFatherOccupation(e.target.value)}
-                      placeholder="Pekerjaan utama"
-                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Nama Instansi / Tempat Bekerja Ayah
-                    </label>
-                    <input
-                      type="text"
-                      value={fatherInstitution}
-                      onChange={(e) => setFatherInstitution(e.target.value)}
-                      placeholder="Nama perusahaan / instansi"
-                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-                </div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Nama Lengkap Ayah / Bunda / Wali <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={parentGuardianName}
+                  onChange={(e) => setParentGuardianName(e.target.value)}
+                  placeholder="Nama lengkap Ayah / Bunda / Wali sesuai KTP/KK"
+                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
+                />
               </div>
-            )}
 
-            {/* Sub-bagian DATA IBU */}
-            {parentMode !== 'FATHER_ONLY' && (
-              <div className={parentMode === 'BOTH' ? 'pt-6 border-t border-[#E2E8E5]' : ''}>
-                <div className="flex items-center gap-2 mb-4">
-                  <UserCheck className="w-4 h-4 text-[#0F5338]" />
-                  <h3 className="text-sm font-bold text-[#0F1E19]">DATA IBU</h3>
-                  <span className="text-xs text-slate-500">
-                    ·{' '}
-                    {parentMode === 'MOTHER_ONLY'
-                      ? 'Wajib dilengkapi'
-                      : 'Opsional apabila Data Ayah sudah diisi lengkap'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Nama Ibu Kandung
-                    </label>
-                    <input
-                      type="text"
-                      value={motherName}
-                      onChange={(e) => setMotherName(e.target.value)}
-                      placeholder="Nama lengkap Ibu sesuai KTP/KK"
-                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      NIK Ibu
-                    </label>
-                    <input
-                      type="text"
-                      value={motherNik}
-                      onChange={(e) => setMotherNik(e.target.value)}
-                      placeholder="16 digit NIK Ibu"
-                      className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Nomor WhatsApp Ibu
-                    </label>
-                    <input
-                      type="tel"
-                      value={motherWhatsapp}
-                      onChange={(e) => setMotherWhatsapp(e.target.value)}
-                      placeholder="0812xxxxxxxx"
-                      className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Pendidikan Terakhir Ibu
-                    </label>
-                    <select
-                      value={motherEducation}
-                      onChange={(e) => setMotherEducation(e.target.value as EducationLevel)}
-                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    >
-                      <option value="">-- Pilih Pendidikan --</option>
-                      {EDUCATION_OPTIONS.map((edu) => (
-                        <option key={edu} value={edu}>
-                          {edu}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Pekerjaan Ibu
-                    </label>
-                    <input
-                      type="text"
-                      value={motherOccupation}
-                      onChange={(e) => setMotherOccupation(e.target.value)}
-                      placeholder="Pekerjaan Ibu"
-                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Nama Instansi / Tempat Bekerja Ibu
-                    </label>
-                    <input
-                      type="text"
-                      value={motherInstitution}
-                      onChange={(e) => setMotherInstitution(e.target.value)}
-                      placeholder="Nama perusahaan / instansi / rumah tangga"
-                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Nomor WhatsApp Ayah / Bunda / Wali <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={parentGuardianWhatsapp}
+                  onChange={(e) => setParentGuardianWhatsapp(e.target.value)}
+                  placeholder="0812xxxxxxxx"
+                  className="w-full px-3.5 py-2 text-sm font-mono-tabular bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#0F5338]"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Nomor aktif WhatsApp untuk menerima konfirmasi &amp; pengumuman hasil seleksi.
+                </p>
               </div>
-            )}
+            </div>
           </div>
         </section>
 

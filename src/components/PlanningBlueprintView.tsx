@@ -231,17 +231,13 @@ export const PlanningBlueprintView: React.FC<PlanningBlueprintViewProps> = ({
                 </tr>
                 <tr>
                   <td className="py-3 px-4 font-semibold text-slate-900">
-                    5. Data Orang Tua (Ayah / Ibu)
+                    5. Data Ayah / Bunda / Wali
                   </td>
                   <td className="py-3 px-4">
-                    Nama, NIK, No. WA, Pendidikan (SD–S3/Lainnya), Pekerjaan, Instansi
+                    Nama Lengkap Ayah/Bunda/Wali, Nomor WhatsApp Ayah/Bunda/Wali
                   </td>
                   <td className="py-3 px-4 text-slate-600">
-                    <strong>Logika OR (Salah Satu Cukup):</strong> Valid apabila{' '}
-                    <code className="font-mono-tabular">
-                      isFatherComplete || isMotherComplete
-                    </code>
-                    . Orang tua tidak wajib mengisi keduanya jika hanya salah satu yang tersedia.
+                    <strong>1 Form Sederhana:</strong> Hanya input Nama Lengkap dan Nomor WhatsApp aktif orang tua/wali untuk kepraktisan pengisian dan komunikasi panitia SPMB.
                   </td>
                 </tr>
                 <tr>

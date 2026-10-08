@@ -343,7 +343,7 @@ export const ADMIN_UNIT_ACCOUNTS: AdminUnitAccount[] = [
     unitSubtitle: 'Program Internasional & Tahfidz Usia Dini',
     username: 'admin_ais',
     password: 'spmb-ais2026',
-    coordinatorName: 'Ustadzah Hj. Nabila Rahmah, M.Pd.',
+    coordinatorName: 'Sekretariat AIS Arafah',
   },
   {
     unit: 'TK',
@@ -351,7 +351,7 @@ export const ADMIN_UNIT_ACCOUNTS: AdminUnitAccount[] = [
     unitSubtitle: 'Taman Kanak-Kanak Islam Terpadu (Kelompok A & B)',
     username: 'admin_tk',
     password: 'spmb-tk2026',
-    coordinatorName: 'Ustadzah Siti Aminah, S.Pd.AUD',
+    coordinatorName: 'Sekretariat TK Arafah',
   },
   {
     unit: 'SD',
@@ -359,7 +359,7 @@ export const ADMIN_UNIT_ACCOUNTS: AdminUnitAccount[] = [
     unitSubtitle: 'Sekolah Dasar Islam Terpadu Terakreditasi A',
     username: 'admin_sd',
     password: 'spmb-sd2026',
-    coordinatorName: 'Ustadz H. Fauzan Hakim, M.Pd.',
+    coordinatorName: 'Sekretariat SD Arafah',
   },
   {
     unit: 'SMP',
@@ -367,7 +367,7 @@ export const ADMIN_UNIT_ACCOUNTS: AdminUnitAccount[] = [
     unitSubtitle: 'Sekolah Menengah Pertama Islam Terpadu Boarding & Full Day',
     username: 'admin_smp',
     password: 'spmb-smp2026',
-    coordinatorName: 'Ustadz Dr. Ridwan Kamiluddin, M.Ed.',
+    coordinatorName: 'Sekretariat SMP Arafah',
   },
 ];
 

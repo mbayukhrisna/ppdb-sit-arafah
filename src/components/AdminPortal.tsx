@@ -370,6 +370,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 mt-1">{acc.unitSubtitle}</p>
+                      <div className="mt-1.5 text-[11px] text-[#0F5338]">
+                        <span className="text-slate-500">Koordinator:</span>{' '}
+                        <strong className="font-semibold text-slate-800">{acc.coordinatorName}</strong>
+                      </div>
                       <div className="mt-3 pt-3 border-t border-slate-100 text-xs space-y-1 font-mono-tabular text-slate-700">
                         <div>
                           User: <strong className="text-[#0F1E19]">{acc.username}</strong>
